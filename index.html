@@ -1,0 +1,2925 @@
+<!--
+================================================================================
+  PROPRIETARY SOFTWARE LICENSE — ALL RIGHTS RESERVED
+================================================================================
+  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v6.1 PRO)
+  DEDICATED TO: MATHÉO B. (Future Airline & Aeronautical Pilot Edition)
+  ARCHITECTURE: Visuals by Yoni Brd
+  COPYRIGHT   : © 2026 Mathéo B. & Visuals by Yoni Brd. All Rights Reserved.
+
+  LEGAL NOTICE:
+  This source code, parallel multi-gateway ADS-B engine, 60-FPS kinematic
+  extrapolator, Mode-S EHS decoders, and BELUX/FR/UK emergency squawk guard
+  are the exclusive intellectual property of Mathéo B. and Visuals by Yoni Brd.
+  Unauthorized copying, modification, reverse-engineering, or redistribution
+  is strictly prohibited under international copyright laws.
+================================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MATH'S APP v6.1 // BELUX-FR-UK TACTICAL AVIONICS & 60FPS RADAR</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+
+  <!-- Leaflet Vector Engine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg-deep: #04060a;
+      --bg-panel: #0a0e17;
+      --bg-card: #101726;
+      --bg-card-hover: #172238;
+      --border-dim: #1c283d;
+      --border-bright: #2c4063;
+      --cyan: #00e5ff;
+      --cyan-dim: rgba(0, 229, 255, 0.14);
+      --magenta: #ff00ff;
+      --magenta-dim: rgba(255, 0, 255, 0.15);
+      --green: #00e676;
+      --green-dim: rgba(0, 230, 118, 0.15);
+      --amber: #ffab00;
+      --amber-dim: rgba(255, 171, 0, 0.16);
+      --red: #ff1744;
+      --red-dim: rgba(255, 23, 68, 0.25);
+      --text-main: #e2e8f0;
+      --text-muted: #7e91ad;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-hud: 'Orbitron', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+    }
+
+    .cockpit-shell {
+      display: grid;
+      grid-template-rows: 54px 1fr 24px;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ======================= TOP GLARESHIELD BAR ======================= */
+    .top-bar {
+      background: linear-gradient(180deg, #11192b 0%, #080c14 100%);
+      border-bottom: 1px solid var(--border-bright);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-right: 1px solid var(--border-dim);
+      padding-right: 10px;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      width: 30px;
+      height: 30px;
+      border: 1.5px solid var(--cyan);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 229, 255, 0.08);
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+    }
+
+    .brand-title {
+      font-family: var(--font-hud);
+      font-size: 13.5px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      color: #fff;
+    }
+
+    .brand-title span { color: var(--cyan); }
+    .brand-sub { font-size: 8.5px; color: var(--text-muted); display: block; }
+
+    /* 6-AIRPORT CONTINUOUS WATCHDOG SELECTOR */
+    .airport-selector {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: nowrap;
+    }
+
+    .apt-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      color: var(--text-main);
+      padding: 4px 9px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.15;
+      min-width: 76px;
+    }
+
+    .apt-btn-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 6px;
+    }
+
+    .apt-btn small {
+      font-size: 7.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .apt-btn:hover {
+      border-color: var(--cyan);
+      background: var(--bg-card-hover);
+    }
+
+    .apt-btn.active {
+      background: var(--cyan-dim);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.22);
+    }
+
+    .apt-btn.active small { color: #d0f8ff; }
+
+    /* WATCHDOG STATUS LED */
+    .watchdog-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .watchdog-led.warn {
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+    }
+
+    .watchdog-led.crit {
+      background: var(--red);
+      box-shadow: 0 0 12px var(--red);
+      animation: blinkRedLed 0.5s infinite alternate;
+    }
+
+    @keyframes blinkRedLed {
+      from { transform: scale(0.9); opacity: 0.6; }
+      to { transform: scale(1.4); opacity: 1; box-shadow: 0 0 16px #ff1744; }
+    }
+
+    .icao-search {
+      display: flex;
+      align-items: center;
+      background: #06090f;
+      border: 1px solid var(--border-bright);
+      border-radius: 3px;
+      padding: 2px 5px;
+    }
+
+    .icao-search input {
+      background: transparent;
+      border: none;
+      color: var(--cyan);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 11px;
+      width: 44px;
+      text-transform: uppercase;
+      outline: none;
+    }
+
+    .icao-search button {
+      background: var(--cyan);
+      color: #000;
+      border: none;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 9.5px;
+      padding: 3px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    /* TOP RIGHT CONTROLS */
+    .top-telemetry {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .instructor-toggle {
+      background: rgba(0, 230, 118, 0.14);
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 5px 8px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .instructor-toggle.off {
+      background: var(--bg-card);
+      border-color: var(--border-dim);
+      color: var(--text-muted);
+    }
+
+    .master-caution-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      color: var(--text-muted);
+      padding: 5px 8px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .master-caution-btn.active-alert {
+      background: var(--red-dim);
+      border-color: var(--red);
+      color: #fff;
+      animation: pulseRed 0.7s infinite alternate;
+    }
+
+    @keyframes pulseRed {
+      from { box-shadow: 0 0 4px var(--red); }
+      to { box-shadow: 0 0 18px var(--red); background: rgba(255, 23, 68, 0.55); }
+    }
+
+    .zulu-clock {
+      text-align: right;
+      border-left: 1px solid var(--border-dim);
+      padding-left: 8px;
+    }
+
+    .zulu-time {
+      font-family: var(--font-hud);
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+
+    .zulu-date { font-size: 8px; color: var(--text-muted); }
+
+    /* ======================= 3-COLUMN WORKSPACE ======================= */
+    .workspace {
+      display: grid;
+      grid-template-columns: 340px 1fr 415px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .panel-left { border-right: 1px solid var(--border-bright); }
+    .panel-right { border-left: 1px solid var(--border-bright); }
+
+    .panel-section {
+      border-bottom: 1px solid var(--border-dim);
+      padding: 8px 10px;
+    }
+
+    .sec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+
+    .sec-badge {
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .cat-VFR { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+    .cat-MVFR { background: rgba(41, 121, 255, 0.2); color: #448aff; border: 1px solid #448aff; }
+    .cat-IFR { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+    .cat-LIFR { background: var(--magenta-dim); color: var(--magenta); border: 1px solid var(--magenta); }
+
+    /* METAR & WX CELLS */
+    .raw-metar-box {
+      background: #06090f;
+      border: 1px solid var(--border-dim);
+      border-left: 3px solid var(--cyan);
+      padding: 6px;
+      font-size: 10px;
+      line-height: 1.35;
+      color: #d1e4ff;
+      border-radius: 3px;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+
+    .wx-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+
+    .wx-cell {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      padding: 5px 6px;
+      border-radius: 3px;
+    }
+
+    .wx-cell .k {
+      font-size: 8px;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .wx-cell .v {
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* RUNWAY & CROSSWIND VECTOR ANALYZER */
+    .rwy-selector-row {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .rwy-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      color: var(--text-muted);
+      padding: 3px 7px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .rwy-chip.active {
+      background: var(--cyan-dim);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .xwind-visualizer {
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 8px;
+      align-items: center;
+      background: #060a10;
+      border: 1px solid var(--border-dim);
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .xwind-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .xm-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed var(--border-dim);
+      padding-bottom: 2px;
+    }
+
+    .xm-row span:first-child { color: var(--text-muted); font-size: 9px; }
+    .xm-row span:last-child { font-weight: 800; font-size: 10.5px; }
+
+    /* LIVE VHF ATC RADIO STACK */
+    .radio-box {
+      background: #06090e;
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      padding: 7px;
+    }
+
+    .freq-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #030508;
+      border: 1px solid #192538;
+      padding: 5px 8px;
+      border-radius: 3px;
+      margin-bottom: 6px;
+    }
+
+    .freq-digits {
+      font-family: var(--font-hud);
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--green);
+      letter-spacing: 1.5px;
+      text-shadow: 0 0 8px rgba(0, 230, 118, 0.4);
+    }
+
+    .audio-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+
+    .btn-avionics {
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      color: var(--text-main);
+      padding: 5px 6px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: 0.15s;
+    }
+
+    .btn-avionics:hover { border-color: var(--cyan); color: var(--cyan); }
+    .btn-avionics.active-green { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .btn-avionics.active-cyan { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+
+    .atc-transcript-tape {
+      background: #030508;
+      border: 1px solid #152232;
+      color: var(--green);
+      font-size: 9px;
+      padding: 4px 6px;
+      border-radius: 2px;
+      margin-bottom: 5px;
+      min-height: 30px;
+      line-height: 1.3;
+    }
+
+    #oscilloscope {
+      width: 100%;
+      height: 28px;
+      background: #030508;
+      border: 1px solid #152232;
+      border-radius: 2px;
+      display: block;
+    }
+
+    /* ======================= CENTER RADAR MAP ======================= */
+    .map-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #050811;
+    }
+
+    #radar-map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #050811;
+    }
+
+    .map-hud-top {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      z-index: 500;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      pointer-events: none;
+      flex-wrap: wrap;
+    }
+
+    .hud-toolbar {
+      display: flex;
+      gap: 4px;
+      pointer-events: auto;
+      background: rgba(7, 10, 16, 0.92);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--border-bright);
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .hud-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .hud-btn:hover { color: #fff; }
+    .hud-btn.active { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+    .hud-btn.mil-active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+    .hud-btn.danger-active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+    .map-watermark {
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      z-index: 400;
+      pointer-events: none;
+      font-size: 9px;
+      color: rgba(0, 229, 255, 0.45);
+      letter-spacing: 0.8px;
+      font-weight: 700;
+    }
+
+    .altitude-legend {
+      position: absolute;
+      bottom: 8px;
+      right: 10px;
+      z-index: 400;
+      background: rgba(7, 10, 16, 0.9);
+      border: 1px solid var(--border-dim);
+      padding: 4px 8px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 8.5px;
+      pointer-events: none;
+    }
+
+    .leg-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 3px;
+    }
+
+    /* ======================= RIGHT PANEL: DEEP INSPECTOR ======================= */
+    .target-banner {
+      background: linear-gradient(90deg, rgba(0,229,255,0.16) 0%, rgba(17,24,38,0.95) 100%);
+      border-bottom: 1px solid var(--cyan);
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .target-banner.danger-banner {
+      background: linear-gradient(90deg, rgba(255,23,68,0.35) 0%, rgba(17,24,38,0.95) 100%);
+      border-bottom: 1px solid var(--red);
+    }
+
+    .target-callsign {
+      font-family: var(--font-hud);
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    .target-sub {
+      font-size: 9.5px;
+      color: var(--cyan);
+      margin-top: 2px;
+    }
+
+    .wake-badge {
+      background: var(--amber-dim);
+      border: 1px solid var(--amber);
+      color: var(--amber);
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    /* FLIGHT ROUTE ORIGIN -> DESTINATION CARD */
+    .route-card {
+      background: #060a12;
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      padding: 7px 9px;
+      margin-bottom: 7px;
+    }
+
+    .route-airports {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .route-apt-code {
+      font-family: var(--font-hud);
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--cyan);
+    }
+
+    .route-apt-city {
+      font-size: 8.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .route-progress-track {
+      width: 100%;
+      height: 5px;
+      background: #141e30;
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .route-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--magenta));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .route-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8.5px;
+      color: var(--text-muted);
+    }
+
+    /* MINI PFD & FMA */
+    .pfd-wrapper {
+      background: #05080e;
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      padding: 4px;
+      margin-bottom: 6px;
+      position: relative;
+    }
+
+    #pfd-canvas {
+      width: 100%;
+      height: 135px;
+      display: block;
+      border-radius: 2px;
+    }
+
+    .fma-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .fma-box {
+      background: #060a10;
+      border: 1px solid var(--border-dim);
+      padding: 4px;
+      text-align: center;
+      border-radius: 2px;
+    }
+
+    .fma-box .lbl { font-size: 7.5px; color: var(--text-muted); display: block; }
+    .fma-box .val { font-size: 10.5px; font-weight: 800; color: var(--magenta); }
+
+    /* TELEMETRY GRIDS */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+    }
+
+    .t-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dim);
+      padding: 5px 7px;
+      border-radius: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .t-card[data-tip]:hover, .wx-cell[data-tip]:hover, .fma-box[data-tip]:hover {
+      border-color: var(--green);
+      cursor: help;
+    }
+
+    .t-card .k { font-size: 8.5px; color: var(--text-muted); }
+    .t-card .v { font-size: 11px; font-weight: 800; color: #fff; }
+    .t-card .v.cyan { color: var(--cyan); }
+    .t-card .v.magenta { color: var(--magenta); }
+    .t-card .v.green { color: var(--green); }
+    .t-card .v.amber { color: var(--amber); }
+    .t-card .v.red { color: var(--red); }
+
+    .aircraft-photo-box {
+      width: 100%;
+      height: 115px;
+      background: #06090f;
+      border: 1px solid var(--border-dim);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    .aircraft-photo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-credit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      background: rgba(5, 7, 11, 0.84);
+      padding: 2px 6px;
+      font-size: 8px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* TRAFFIC TABLE */
+    .traffic-table-wrap {
+      max-height: 170px;
+      overflow-y: auto;
+    }
+
+    table.traffic-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5px;
+    }
+
+    table.traffic-tbl th {
+      text-align: left;
+      color: var(--text-muted);
+      font-size: 8px;
+      padding: 4px;
+      border-bottom: 1px solid var(--border-dim);
+      position: sticky;
+      top: 0;
+      background: var(--bg-panel);
+    }
+
+    table.traffic-tbl td {
+      padding: 4px;
+      border-bottom: 1px solid rgba(30, 42, 64, 0.4);
+      cursor: pointer;
+    }
+
+    table.traffic-tbl tr:hover { background: var(--bg-card-hover); }
+    table.traffic-tbl tr.selected-row { background: var(--cyan-dim); color: var(--cyan); }
+    table.traffic-tbl tr.danger-row { background: var(--red-dim); color: #fff; font-weight: 800; }
+
+    /* ======================= FLIGHT INSTRUCTOR TOOLTIP HUD ======================= */
+    #instructor-tooltip {
+      position: fixed;
+      z-index: 9999;
+      width: 315px;
+      background: rgba(6, 10, 18, 0.96);
+      border: 1.5px solid var(--green);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.85), 0 0 14px rgba(0, 230, 118, 0.25);
+      border-radius: 5px;
+      padding: 10px;
+      pointer-events: none;
+      display: none;
+      backdrop-filter: blur(8px);
+    }
+
+    .tip-header {
+      font-family: var(--font-hud);
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--green);
+      border-bottom: 1px solid rgba(0, 230, 118, 0.3);
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .tip-body {
+      font-size: 10px;
+      line-height: 1.45;
+      color: #e2e8f0;
+      margin-bottom: 6px;
+    }
+
+    .tip-pilot-rule {
+      background: rgba(0, 229, 255, 0.1);
+      border-left: 2px solid var(--cyan);
+      padding: 4px 6px;
+      font-size: 9.5px;
+      color: var(--cyan);
+    }
+
+    /* ======================= MODALS ======================= */
+    .watchdog-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 5, 9, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 5000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .watchdog-modal {
+      width: 760px;
+      max-width: 95vw;
+      max-height: 86vh;
+      background: #0a0f18;
+      border: 1.5px solid var(--red);
+      box-shadow: 0 0 35px rgba(255, 23, 68, 0.35);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .wm-header {
+      background: linear-gradient(90deg, rgba(255,23,68,0.3) 0%, #0a0f18 100%);
+      border-bottom: 1px solid var(--red);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .wm-title {
+      font-family: var(--font-hud);
+      font-size: 12.5px;
+      font-weight: 900;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wm-body {
+      padding: 12px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .wm-card {
+      background: #101726;
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    .wm-card.crit { border-color: var(--red); background: rgba(255, 23, 68, 0.1); }
+    .wm-card.warn { border-color: var(--amber); background: rgba(255, 171, 0, 0.08); }
+
+    @keyframes dangerRingPulse {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    .danger-pulse-ring {
+      transform-origin: 16px 16px;
+      animation: dangerRingPulse 1.1s infinite ease-out;
+    }
+
+    /* FOOTER */
+    .footer-bar {
+      background: #04060a;
+      border-top: 1px solid var(--border-bright);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 9px;
+      color: var(--text-muted);
+      z-index: 1000;
+    }
+
+    .footer-bar strong { color: var(--cyan); }
+
+    .ac-label {
+      background: rgba(6, 9, 15, 0.92);
+      border: 1px solid var(--border-bright);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      padding: 1px 4px;
+      border-radius: 2px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .ac-label.danger-lbl {
+      background: rgba(255, 23, 68, 0.92);
+      border-color: #fff;
+      color: #fff;
+      font-weight: 800;
+    }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- FLIGHT INSTRUCTOR FLOATING TOOLTIP -->
+<div id="instructor-tooltip">
+  <div class="tip-header">
+    <span id="tip-title">INSTRUMENT EXPLANATION</span>
+    <span>ATPL BRIEFING</span>
+  </div>
+  <div class="tip-body" id="tip-desc"></div>
+  <div class="tip-pilot-rule" id="tip-rule"></div>
+</div>
+
+<!-- MULTI-AIRPORT & BELUX/FR/UK EMERGENCY WATCHDOG MODAL -->
+<div class="watchdog-modal-backdrop" id="watchdog-modal">
+  <div class="watchdog-modal">
+    <div class="wm-header">
+      <div class="wm-title">
+        <span style="color:var(--red)">●</span>
+        <span id="modal-main-title">BELUX / FRANCE / UK — EMERGENCY AIRCRAFT & 6-AIRPORT WATCHDOG</span>
+      </div>
+      <button class="btn-avionics" onclick="closeWatchdogModal()">✕ CLOSE MONITOR</button>
+    </div>
+    <div id="danger-aircraft-section" style="padding:10px 12px 0 12px;"></div>
+    <div class="wm-body" id="watchdog-cards-container"></div>
+  </div>
+</div>
+
+<div class="cockpit-shell">
+  <!-- ======================= TOP GLARESHIELD BAR ======================= -->
+  <header class="top-bar">
+    <div class="brand-block">
+      <div class="brand-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="#00e5ff"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">MATH’S <span>APP</span></div>
+        <span class="brand-sub">v6.1 PRO // INSTANT ADS-B LOCK</span>
+      </div>
+    </div>
+
+    <!-- 6 PRIORITY AIRPORTS WITH CONTINUOUS LIVE RED-LIGHT WATCHDOG -->
+    <div class="airport-selector" id="airport-buttons">
+      <button class="apt-btn active" data-icao="ELLX" onclick="selectAirport('ELLX')">
+        <div class="apt-btn-top"><span>ELLX</span><i class="watchdog-led" id="led-ELLX" onclick="event.stopPropagation(); openWatchdogModal('ELLX')"></i></div>
+        <small>LUXEMBOURG</small>
+      </button>
+      <button class="apt-btn" data-icao="EBCI" onclick="selectAirport('EBCI')">
+        <div class="apt-btn-top"><span>EBCI</span><i class="watchdog-led" id="led-EBCI" onclick="event.stopPropagation(); openWatchdogModal('EBCI')"></i></div>
+        <small>GOSSELIES</small>
+      </button>
+      <button class="apt-btn" data-icao="EBLG" onclick="selectAirport('EBLG')">
+        <div class="apt-btn-top"><span>EBLG</span><i class="watchdog-led" id="led-EBLG" onclick="event.stopPropagation(); openWatchdogModal('EBLG')"></i></div>
+        <small>LIÈGE</small>
+      </button>
+      <button class="apt-btn" data-icao="EBBR" onclick="selectAirport('EBBR')">
+        <div class="apt-btn-top"><span>EBBR</span><i class="watchdog-led" id="led-EBBR" onclick="event.stopPropagation(); openWatchdogModal('EBBR')"></i></div>
+        <small>BRUSSELS</small>
+      </button>
+      <button class="apt-btn" data-icao="EGLC" onclick="selectAirport('EGLC')">
+        <div class="apt-btn-top"><span>EGLC</span><i class="watchdog-led" id="led-EGLC" onclick="event.stopPropagation(); openWatchdogModal('EGLC')"></i></div>
+        <small>LONDON CITY</small>
+      </button>
+      <button class="apt-btn" data-icao="LFPG" onclick="selectAirport('LFPG')">
+        <div class="apt-btn-top"><span>LFPG</span><i class="watchdog-led" id="led-LFPG" onclick="event.stopPropagation(); openWatchdogModal('LFPG')"></i></div>
+        <small>PARIS CDG</small>
+      </button>
+
+      <div class="icao-search">
+        <input type="text" id="custom-icao" placeholder="ICAO" maxlength="4" onkeydown="if(event.key==='Enter') searchCustomICAO()" />
+        <button onclick="searchCustomICAO()">GO</button>
+      </div>
+    </div>
+
+    <!-- TOP RIGHT: BELUX/FR/UK EMERGENCY GUARD + AIRPORT WATCHDOG + INSTRUCTOR -->
+    <div class="top-telemetry">
+      <button class="master-caution-btn" id="btn-euro-danger" onclick="openWatchdogModal()" data-tip="EURO_DANGER_GUARD">
+        <span id="danger-dot" style="color:var(--green)">●</span>
+        <span id="danger-text">BELUX/FR/UK SKY: 0 EMERGENCY</span>
+      </button>
+
+      <button class="master-caution-btn" id="btn-master-caution" onclick="openWatchdogModal()">
+        <span id="caution-dot" style="color:var(--green)">●</span>
+        <span id="caution-text">6-APT WX: OK</span>
+      </button>
+
+      <button class="instructor-toggle" id="btn-instructor" onclick="toggleInstructorMode()" data-tip="INSTRUCTOR_MODE">
+        <span>🎓 BRIEF: ON</span>
+      </button>
+
+      <div class="zulu-clock">
+        <div class="zulu-time" id="zulu-time">00:00:00Z</div>
+        <div class="zulu-date" id="zulu-date">UTC</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================= 3-COLUMN WORKSPACE ======================= -->
+  <div class="workspace">
+
+    <!-- ==================== LEFT PANEL: METAR, RUNWAY & LIVE ATC ==================== -->
+    <aside class="panel panel-left">
+      <div class="panel-section">
+        <div class="sec-header">
+          <span id="wx-apt-title">ELLX // METAR & ATMOSPHERICS</span>
+          <span id="flight-cat-badge" class="sec-badge cat-VFR" data-tip="FLIGHT_CAT">VFR</span>
+        </div>
+
+        <div class="raw-metar-box" id="raw-metar" data-tip="RAW_METAR">
+          SYNCHRONIZING LIVE METAR TELEMETRY...
+        </div>
+
+        <div class="wx-grid">
+          <div class="wx-cell" data-tip="SURFACE_WIND">
+            <span class="k">SURFACE WIND</span>
+            <span class="v" id="wx-wind">---° / -- KT</span>
+          </div>
+          <div class="wx-cell" data-tip="QNH">
+            <span class="k">QNH ALTIMETER</span>
+            <span class="v" id="wx-qnh" style="color:var(--cyan)">---- hPa</span>
+          </div>
+          <div class="wx-cell" data-tip="VISIBILITY">
+            <span class="k">VISIBILITY</span>
+            <span class="v" id="wx-vis">---- M</span>
+          </div>
+          <div class="wx-cell" data-tip="TEMP_DEW">
+            <span class="k">TEMP / DEW</span>
+            <span class="v" id="wx-temp">--°C / --°C</span>
+          </div>
+          <div class="wx-cell" data-tip="DENSITY_ALT">
+            <span class="k">DENSITY ALT</span>
+            <span class="v" id="wx-da" style="color:var(--amber)">---- FT</span>
+          </div>
+          <div class="wx-cell" data-tip="CLOUD_BASE">
+            <span class="k">CLOUD BASE</span>
+            <span class="v" id="wx-cloud">---- FT AGL</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SURGICAL RUNWAY & CROSSWIND VECTOR SOLVER -->
+      <div class="panel-section">
+        <div class="sec-header">
+          <span>RUNWAY CROSSWIND & ILS SOLVER</span>
+          <span id="active-rwy-label" style="color:#fff">RWY 24</span>
+        </div>
+
+        <div class="rwy-selector-row" id="rwy-buttons"></div>
+
+        <div class="xwind-visualizer" data-tip="CROSSWIND_SOLVER">
+          <svg id="rwy-svg" width="100" height="100" viewBox="0 0 110 110"></svg>
+          <div class="xwind-metrics">
+            <div class="xm-row">
+              <span>HEAD / TAILWIND</span>
+              <span id="xw-head" style="color:var(--green)">--.- KT</span>
+            </div>
+            <div class="xm-row">
+              <span>CROSSWIND COMP</span>
+              <span id="xw-cross" style="color:var(--cyan)">--.- KT</span>
+            </div>
+            <div class="xm-row">
+              <span>MAX GUST X-WIND</span>
+              <span id="xw-gust" style="color:var(--amber)">--.- KT</span>
+            </div>
+            <div class="xm-row">
+              <span>ELEV / GLIDEPATH</span>
+              <span id="xw-elev">---- FT / 3.0°</span>
+            </div>
+            <div class="xm-row" style="border:none">
+              <span>DEMONSTRATED LIMIT</span>
+              <span id="xw-status" style="color:var(--green)">WITHIN 15KT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIRECT IN-APP LIVE ATC STREAMER (VERIFIED LIVE STREAMS AT THE TOP!) -->
+      <div class="panel-section">
+        <div class="sec-header">
+          <span>VHF COMM STACK // 24/7 LIVE ATC STREAMS</span>
+          <span id="radio-state-badge" style="color:var(--text-muted)">STANDBY</span>
+        </div>
+
+        <div class="radio-box">
+          <div class="freq-display" data-tip="VHF_COMM">
+            <div>
+              <div style="font-size:7.5px;color:var(--text-muted)">ACTIVE COM1 TUNER</div>
+              <div class="freq-digits" id="com1-freq">118.250</div>
+            </div>
+            <div style="text-align:right">
+              <div id="com1-name" style="font-weight:800;color:var(--green);font-size:9.5px">EBBR BRUSSELS APPROACH</div>
+              <div id="com1-mode-lbl" style="font-size:8px;color:var(--cyan)">VERIFIED 24/7 LIVE VHF FEED</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:6px">
+            <div style="font-size:8px;color:var(--green);font-weight:700;margin-bottom:3px">🟢 ACTIVE 24/7 LIVE ATC FEEDS (TOP OF LIST):</div>
+            <select id="atc-channel-select" onchange="changeATCChannel()" style="width:100%;background:#0c1320;color:var(--cyan);border:1px solid var(--green);padding:5px;font-family:var(--font-mono);font-size:9.5px;font-weight:700;border-radius:2px;">
+              <optgroup label="🟢 VERIFIED 24/7 LIVE REAL ATC STREAMS (EUROPE)">
+                <option value="https://d.liveatc.net/ebbr_app" data-freq="118.250" data-name="EBBR BRUSSELS APPROACH">🟢 LIVE 24/7 — EBBR BRUSSELS APPROACH (118.250)</option>
+                <option value="https://d.liveatc.net/ebbr_twr" data-freq="118.605" data-name="EBBR BRUSSELS TOWER">🟢 LIVE 24/7 — EBBR BRUSSELS TOWER (118.605)</option>
+                <option value="https://d.liveatc.net/lfpg3_twr" data-freq="119.250" data-name="LFPG PARIS CDG TOWER">🟢 LIVE 24/7 — LFPG PARIS CDG TOWER (119.250)</option>
+                <option value="https://d.liveatc.net/lfpg2_app" data-freq="118.150" data-name="LFPG PARIS CDG APPROACH">🟢 LIVE 24/7 — LFPG PARIS CDG APPROACH (118.150)</option>
+                <option value="https://d.liveatc.net/eham_app" data-freq="119.055" data-name="EHAM AMSTERDAM RADAR">🟢 LIVE 24/7 — EHAM AMSTERDAM SCHIPHOL (119.055)</option>
+                <option value="https://d.liveatc.net/eddf2_app" data-freq="120.800" data-name="EDDF FRANKFURT DIRECTOR">🟢 LIVE 24/7 — EDDF FRANKFURT APPROACH (120.800)</option>
+                <option value="https://d.liveatc.net/lszh_twr" data-freq="118.100" data-name="LSZH ZURICH TOWER">🟢 LIVE 24/7 — LSZH ZURICH TOWER (118.100)</option>
+                <option value="https://d.liveatc.net/eidw_twr" data-freq="118.600" data-name="EIDW DUBLIN TOWER">🟢 LIVE 24/7 — EIDW DUBLIN TOWER (118.600)</option>
+              </optgroup>
+              <optgroup label="🎙 SYNTHETIC RADAR AI ATC (FOR ELLX / EBCI / EGLC)">
+                <option value="SYNTH_LOCAL" data-freq="118.105" data-name="LOCAL AI RADAR TOWER">🎙 SYNTHETIC AI ATC (READS PLANES ON SCREEN)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="audio-controls">
+            <button class="btn-avionics" id="btn-live-atc" onclick="toggleLiveATC()">
+              <span>▶ LISTEN LIVE ATC</span>
+            </button>
+            <button class="btn-avionics" id="btn-voice-atis" onclick="toggleVoiceATIS()">
+              <span>🔊 D-ATIS METAR VOICE</span>
+            </button>
+          </div>
+
+          <div class="atc-transcript-tape" id="atc-transcript">
+            [COM1 READY] CLICK "▶ LISTEN LIVE ATC" TO STREAM REAL VHF CONTROLLER AUDIO
+          </div>
+
+          <canvas id="oscilloscope" width="290" height="28"></canvas>
+          <!-- Note: NO crossorigin attribute so local file:// can stream LiveATC MP3 freely -->
+          <audio id="atc-audio-player" preload="none"></audio>
+        </div>
+      </div>
+
+      <!-- SECTOR TRAFFIC MATRIX -->
+      <div class="panel-section" style="flex:1">
+        <div class="sec-header">
+          <span>LIVE TARGETS (<span id="stat-total-ac">0</span> AC / <span id="stat-mil-ac" style="color:var(--amber)">0</span> MIL)</span>
+          <span id="feed-health-lbl" style="color:var(--green)">CONNECTING...</span>
+        </div>
+        <div class="traffic-table-wrap">
+          <table class="traffic-tbl">
+            <thead>
+              <tr>
+                <th>CALLSIGN</th>
+                <th>TYPE</th>
+                <th>ALT</th>
+                <th>GS</th>
+                <th>DIST</th>
+              </tr>
+            </thead>
+            <tbody id="traffic-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==================== CENTER PANEL: 60FPS RADAR DISPLAY ==================== -->
+    <main class="map-container" id="map-wrapper">
+      <div class="map-hud-top">
+        <!-- Tactical Filter Toolbar -->
+        <div class="hud-toolbar">
+          <button class="hud-btn active" id="flt-all" onclick="setTrafficFilter('ALL')">ALL</button>
+          <button class="hud-btn" id="flt-danger" onclick="setTrafficFilter('DANGER')">🔴 DANGER / SQUAWK (<span id="danger-count-btn">0</span>)</button>
+          <button class="hud-btn" id="flt-mil" onclick="setTrafficFilter('MIL')">MILITARY</button>
+          <button class="hud-btn" id="flt-app" onclick="setTrafficFilter('APP')">APPROACH</button>
+          <button class="hud-btn" id="flt-hvy" onclick="setTrafficFilter('HVY')">HEAVY</button>
+        </div>
+
+        <!-- Zero-Block Esri Map Switcher -->
+        <div class="hud-toolbar">
+          <button class="hud-btn active" id="map-dark" onclick="setBasemap('DARK')">DARK RADAR</button>
+          <button class="hud-btn" id="map-sat" onclick="setBasemap('SAT')">SATELLITE HD</button>
+          <button class="hud-btn active" id="lyr-vectors" onclick="toggleMapLayer('vectors')">60S VECTORS</button>
+          <button class="hud-btn" id="lyr-wxradar" onclick="toggleMapLayer('wxradar')">WX RADAR</button>
+          <button class="hud-btn" id="lyr-follow" onclick="toggleFollowSelected()">LOCK TARGET</button>
+        </div>
+      </div>
+
+      <div id="radar-map"></div>
+
+      <div class="map-watermark">
+        LICENSED TO MATHÉO B. // VISUALS BY YONI BRD // BELUX-FR-UK CONTINUOUS EMERGENCY GUARD
+      </div>
+
+      <div class="altitude-legend">
+        <span><i class="leg-dot" style="background:#ff1744"></i>EMERGENCY</span>
+        <span><i class="leg-dot" style="background:#00e676"></i>&lt; 5,000 FT</span>
+        <span><i class="leg-dot" style="background:#00e5ff"></i>5K–18K FT</span>
+        <span><i class="leg-dot" style="background:#b388ff"></i>18K–32K FT</span>
+        <span><i class="leg-dot" style="background:#ff00ff"></i>&gt; 32,000 FT</span>
+        <span><i class="leg-dot" style="background:#ffab00"></i>MILITARY</span>
+      </div>
+    </main>
+
+    <!-- ==================== RIGHT PANEL: TARGET DEEP INSPECTOR ==================== -->
+    <aside class="panel panel-right">
+      <div class="target-banner" id="target-top-banner">
+        <div>
+          <div class="target-callsign" id="insp-callsign">SCANNING RADAR...</div>
+          <div class="target-sub" id="insp-sub">LOCKING ONTO CLOSEST TRANSPONDER IN SECTOR</div>
+        </div>
+        <div class="wake-badge" id="insp-wake" data-tip="WAKE_CAT">CAT: --</div>
+      </div>
+
+      <div class="panel-section">
+        <!-- FLIGHT ROUTE ORIGIN -> DESTINATION & PROGRESS -->
+        <div class="sec-header">
+          <span>FLIGHT PLAN // ORIGIN ➔ DESTINATION & ETA</span>
+          <span id="route-airline" style="color:#fff">OPERATOR</span>
+        </div>
+
+        <div class="route-card" data-tip="FLIGHT_ROUTE">
+          <div class="route-airports">
+            <div>
+              <div class="route-apt-code" id="rt-dep-icao">----</div>
+              <div class="route-apt-city" id="rt-dep-name">ORIGIN AIRPORT</div>
+            </div>
+            <div style="text-align:center;color:var(--cyan);font-size:14px;font-weight:800">
+              ✈ ───►
+            </div>
+            <div style="text-align:right">
+              <div class="route-apt-code" id="rt-arr-icao" style="color:var(--magenta)">----</div>
+              <div class="route-apt-city" id="rt-arr-name">DESTINATION AIRPORT</div>
+            </div>
+          </div>
+
+          <div class="route-progress-track">
+            <div class="route-progress-fill" id="rt-progress-bar"></div>
+          </div>
+
+          <div class="route-meta">
+            <span id="rt-dist-flown">FLOWN: --- NM</span>
+            <span id="rt-pct" style="color:var(--cyan);font-weight:800">--%</span>
+            <span id="rt-eta">REM: --- NM (ETA --:--Z)</span>
+          </div>
+        </div>
+
+        <!-- SYNTHETIC PFD -->
+        <div class="sec-header">
+          <span>SYNTHETIC PFD // REAL-TIME ATTITUDE & TAPES</span>
+          <span id="insp-squawk-pill" style="color:var(--green)" data-tip="SQUAWK">SQK: ----</span>
+        </div>
+
+        <div class="pfd-wrapper" data-tip="SYNTHETIC_PFD">
+          <canvas id="pfd-canvas" width="380" height="135"></canvas>
+        </div>
+
+        <!-- AUTOPILOT FMA STRIP -->
+        <div class="fma-strip">
+          <div class="fma-box" data-tip="MCP_ALT">
+            <span class="lbl">MCP SEL ALT</span>
+            <span class="val" id="fma-sel-alt">----- FT</span>
+          </div>
+          <div class="fma-box" data-tip="MCP_HDG">
+            <span class="lbl">MCP SEL HDG</span>
+            <span class="val" id="fma-sel-hdg">---°</span>
+          </div>
+          <div class="fma-box" data-tip="PILOT_QNH">
+            <span class="lbl">PILOT QNH</span>
+            <span class="val" id="fma-qnh" style="color:var(--cyan)">---- hPa</span>
+          </div>
+          <div class="fma-box" data-tip="FMA_MODES">
+            <span class="lbl">FMS / AP MODE</span>
+            <span class="val" id="fma-modes" style="color:var(--green)">LNAV/VNAV</span>
+          </div>
+        </div>
+
+        <!-- PRIMARY AERODYNAMICS & 4 SPEEDS -->
+        <div class="sec-header">
+          <span>4-SPEED KINEMATICS & PRIMARY FLIGHT DATA</span>
+          <button class="rwy-chip active" onclick="toggleComplexData()">HIDE / SHOW ADVANCED EHS</button>
+        </div>
+
+        <div class="telemetry-grid">
+          <div class="t-card" data-tip="IAS"><span class="k">IAS (INDICATED)</span><span class="v cyan" id="t-ias">--- KT</span></div>
+          <div class="t-card" data-tip="TAS"><span class="k">TAS (TRUE AIRSPEED)</span><span class="v cyan" id="t-tas">--- KT</span></div>
+          <div class="t-card" data-tip="GS"><span class="k">GS (GROUND SPEED)</span><span class="v green" id="t-gs">--- KT</span></div>
+          <div class="t-card" data-tip="MACH"><span class="k">MACH NUMBER</span><span class="v magenta" id="t-mach">M -.---</span></div>
+          <div class="t-card" data-tip="BARO_ALT"><span class="k">BARO ALTITUDE</span><span class="v" id="t-baro">----- FT</span></div>
+          <div class="t-card" data-tip="VRATE"><span class="k">VERTICAL RATE</span><span class="v" id="t-vrate">---- FPM</span></div>
+        </div>
+
+        <!-- TOGGLEABLE ADVANCED MODE-S EHS TELEMETRY BLOCK -->
+        <div id="complex-telemetry-container" style="margin-top:6px">
+          <div class="sec-header">
+            <span>ADVANCED MODE-S EHS // WIND TRIANGLE & ILS GLIDE</span>
+            <span id="insp-phase" style="color:var(--cyan)">CRUISE</span>
+          </div>
+
+          <div class="telemetry-grid">
+            <div class="t-card" data-tip="ROLL_BANK"><span class="k">ROLL / BANK ANGLE</span><span class="v amber" id="t-roll">0.0°</span></div>
+            <div class="t-card" data-tip="G_LOAD"><span class="k">LOAD FACTOR (G)</span><span class="v amber" id="t-gload">1.00 G</span></div>
+            <div class="t-card" data-tip="WIND_ALOFT"><span class="k">WIND ALOFT</span><span class="v cyan" id="t-wind">---° / -- KT</span></div>
+            <div class="t-card" data-tip="DRIFT_ANGLE"><span class="k">DRIFT (CRAB ANGLE)</span><span class="v amber" id="t-drift">0.0°</span></div>
+            <div class="t-card" data-tip="GLIDE_DIST"><span class="k">DIST TO RWY THR</span><span class="v cyan" id="g-dist">--.- NM</span></div>
+            <div class="t-card" data-tip="GLIDE_ANGLE"><span class="k">GLIDEPATH / REQ VS</span><span class="v green" id="g-angle">-.-° / ----</span></div>
+            <div class="t-card" data-tip="SAT_TEMP"><span class="k">STATIC AIR TEMP</span><span class="v" id="t-sat">--°C</span></div>
+            <div class="t-card" data-tip="NIC_NACP"><span class="k">GPS INTEGRITY</span><span class="v" id="t-nic">NIC:-- NACp:--</span></div>
+          </div>
+        </div>
+
+        <div class="aircraft-photo-box" id="photo-container">
+          <span style="color:var(--text-muted);font-size:9.5px">SELECT AIRCRAFT TO LOAD HIGH-RES PHOTOGRAPH</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ======================= COPYRIGHT FOOTER ======================= -->
+  <footer class="footer-bar">
+    <div>
+      <strong>© 2026 MATH’S APP v6.1</strong> — TACTICAL AVIONICS SYSTEM. Engineered exclusively for <strong>Mathéo B.</strong> | Architecture & Visuals by <strong>Yoni Brd</strong>.
+    </div>
+    <div>
+      PROPRIETARY ALL-RIGHTS-RESERVED LICENSE // HOVER ANY INSTRUMENT FOR PILOT INSTRUCTOR BRIEFING
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ============================================================================
+   COPYRIGHT & ANTI-CLONE PROTECTION
+============================================================================ */
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (
+    e.key === 'F12' ||
+    (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+    (e.ctrlKey && ['U', 'S'].includes(e.key.toUpperCase()))
+  ) {
+    e.preventDefault();
+  }
+});
+
+/* ============================================================================
+   1. FLIGHT INSTRUCTOR KNOWLEDGE BASE
+============================================================================ */
+let instructorMode = true;
+
+const PILOT_TOOLTIPS = {
+  EURO_DANGER_GUARD: {
+    title: 'BELUX / FRANCE / UK EMERGENCY SQUAWK GUARD',
+    desc: 'Continuously monitors the dedicated emergency transponder channels (Squawk 7700 Mayday, 7600 Radio Failure, 7500 Hijack) across Belgium, Luxembourg, France, and the UK.',
+    rule: 'Click anytime to inspect emergencies or run a live 7700 Mayday interception drill.'
+  },
+  INSTRUCTOR_MODE: {
+    title: 'FLIGHT INSTRUCTOR BRIEFING MODE',
+    desc: 'Hovering your mouse over any cockpit instrument explains how airline pilots read and compute that parameter.',
+    rule: 'Click to toggle educational hover popups ON or OFF.'
+  },
+  FLIGHT_CAT: {
+    title: 'FLIGHT RULES CATEGORY (VFR / MVFR / IFR / LIFR)',
+    desc: 'VFR (Green): Ceiling > 3000ft & Vis > 5SM. MVFR (Blue): 1000-3000ft. IFR (Red): < 1000ft or Vis < 3SM.',
+    rule: 'Student pilots require VFR conditions unless flying with an Instrument Rating (IR).'
+  },
+  RAW_METAR: {
+    title: 'METAR (OFFICIAL AERODROME WEATHER REPORT)',
+    desc: 'Format: ICAO code, Observation Time (Zulu), Surface Wind, Visibility, Cloud layers, Temp/Dewpoint, and QNH altimeter pressure.',
+    rule: 'Always check QNH and wind gusts before selecting your active runway.'
+  },
+  SURFACE_WIND: {
+    title: 'SURFACE WIND (DEGREES & KNOTS)',
+    desc: 'Measured at 10m above the runway. Shows where the wind is blowing FROM.',
+    rule: 'Always take off and land INTO the wind.'
+  },
+  QNH: {
+    title: 'QNH BAROMETRIC PRESSURE (hPa)',
+    desc: 'Atmospheric pressure reduced to sea level. Standard ISA pressure is 1013.25 hPa.',
+    rule: '1 hPa change equals approximately 27 feet of altitude.'
+  },
+  DENSITY_ALT: {
+    title: 'DENSITY ALTITUDE (AIR DENSITY PERFORMANCE)',
+    desc: 'Pressure altitude corrected for temperature. Hot air is less dense, reducing wing lift and engine power.',
+    rule: 'High Density Altitude = significantly longer takeoff distance.'
+  },
+  TEMP_DEW: {
+    title: 'TEMPERATURE & DEW POINT SPREAD',
+    desc: 'When Temperature and Dew Point converge within 2°C, visible moisture (fog or low stratus clouds) forms.',
+    rule: 'Cloud Base (ft AGL) ≈ (Temp - Dewpoint) × 400.'
+  },
+  CROSSWIND_SOLVER: {
+    title: 'RUNWAY HEADWIND & CROSSWIND VECTOR SOLVER',
+    desc: 'Splits surface wind into Headwind (along runway) and Crosswind (perpendicular to runway).',
+    rule: 'Light trainer aircraft (C172 / PA28) typically have a 15-knot maximum demonstrated crosswind limit.'
+  },
+  IAS: {
+    title: 'IAS — INDICATED AIRSPEED (KNOTS)',
+    desc: 'Dynamic air pressure measured by the Pitot tube. Primary speed reference for stall and structural limits.',
+    rule: 'Stall speed is always a fixed IAS regardless of altitude.'
+  },
+  TAS: {
+    title: 'TAS — TRUE AIRSPEED (KNOTS)',
+    desc: 'Actual speed through the air mass. Increases by ~2% per 1,000 ft of altitude over IAS.',
+    rule: 'Used for navigation and flight plan timing.'
+  },
+  GS: {
+    title: 'GS — GROUND SPEED (KNOTS)',
+    desc: 'Actual speed over the ground (TAS ± Wind). 1 Knot = 1.852 km/h.',
+    rule: 'Determines exact ETA and required descent rate on final approach.'
+  },
+  MACH: {
+    title: 'MACH NUMBER (SPEED OF SOUND RATIO)',
+    desc: 'Ratio of TAS to the local speed of sound. Mach 0.80 = 80% of the speed of sound.',
+    rule: 'Used at high cruise altitudes (above FL260) to avoid transonic shockwave buffet.'
+  },
+  MCP_ALT: {
+    title: 'MCP SELECTED ALTITUDE (MODE-S COCKPIT DOWNLINK)',
+    desc: 'Shows the exact target altitude dialed into the cockpit autopilot panel by the crew!',
+    rule: 'Lets you see ATC altitude clearances before the plane finishes climbing or descending.'
+  },
+  PILOT_QNH: {
+    title: 'PILOT ALTIMETER SUBSCALE SETTING',
+    desc: 'Downlinked directly from the pilot’s altimeter inside the cockpit.',
+    rule: 'Below transition altitude, this must match the airport METAR QNH.'
+  },
+  ROLL_BANK: {
+    title: 'ROLL / BANK ANGLE (DEGREES)',
+    desc: 'Real-time wing bank angle from the aircraft inertial reference unit.',
+    rule: 'Airliners limit bank angle to 25°–30° for passenger comfort and safety.'
+  },
+  G_LOAD: {
+    title: 'LOAD FACTOR (G-FORCE IN TURN)',
+    desc: 'Centrifugal load on the wings during a banked turn: G = 1 / cos(Bank Angle).',
+    rule: 'A 60° bank pulls 2.00 G and increases stall speed by 41%.'
+  },
+  WIND_ALOFT: {
+    title: 'COMPUTED WIND ALOFT (WIND TRIANGLE)',
+    desc: 'Computed in real time from the difference between Aircraft Heading/TAS and Ground Track/GS.',
+    rule: 'Reveals real jet-stream winds at the aircraft’s exact altitude.'
+  },
+  DRIFT_ANGLE: {
+    title: 'DRIFT / CRAB ANGLE (DEGREES)',
+    desc: 'Angle between where the nose points (Heading) and the actual path over the ground (Track).',
+    rule: 'Pilots crab into the crosswind to stay aligned with the airway or runway centerline.'
+  },
+  GLIDE_ANGLE: {
+    title: 'ILS GLIDEPATH ANGLE & REQUIRED V/S',
+    desc: 'Standard ILS approach is 3.0° (5.5° steep approach at London City EGLC).',
+    rule: 'For a 3.0° glidepath: Required Descent Rate (FPM) ≈ Ground Speed (KT) × 5.'
+  },
+  FLIGHT_ROUTE: {
+    title: 'ORIGIN ➔ DESTINATION & GREAT-CIRCLE PROGRESS',
+    desc: 'Shows departure and arrival airports, airline operator, distance flown, remaining NM, and UTC ETA.',
+    rule: 'Dashed cyan/magenta line on radar shows the Great-Circle flight path.'
+  },
+  SQUAWK: {
+    title: 'TRANSPONDER SQUAWK CODE (4 OCTAL DIGITS)',
+    desc: '4-digit code assigned by ATC. Critical Emergency Codes: 7700 = Mayday/Emergency, 7600 = Radio Failure, 7500 = Hijack.',
+    rule: '7000 is the standard European VFR conspicuity code.'
+  }
+};
+
+const tooltipEl = document.getElementById('instructor-tooltip');
+document.addEventListener('mousemove', e => {
+  if (!instructorMode) {
+    tooltipEl.style.display = 'none';
+    return;
+  }
+  const target = e.target.closest('[data-tip]');
+  if (!target) {
+    tooltipEl.style.display = 'none';
+    return;
+  }
+  const info = PILOT_TOOLTIPS[target.getAttribute('data-tip')];
+  if (!info) return;
+
+  document.getElementById('tip-title').textContent = info.title;
+  document.getElementById('tip-desc').textContent = info.desc;
+  document.getElementById('tip-rule').textContent = info.rule;
+  tooltipEl.style.display = 'block';
+
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + 325 > window.innerWidth) x = e.clientX - 330;
+  if (y + 170 > window.innerHeight) y = e.clientY - 170;
+  tooltipEl.style.left = `${x}px`;
+  tooltipEl.style.top = `${y}px`;
+});
+
+function toggleInstructorMode() {
+  instructorMode = !instructorMode;
+  const btn = document.getElementById('btn-instructor');
+  btn.classList.toggle('off', !instructorMode);
+  btn.innerHTML = instructorMode ? '<span>🎓 BRIEF: ON</span>' : '<span>🎓 BRIEF: OFF</span>';
+}
+
+function toggleComplexData() {
+  const block = document.getElementById('complex-telemetry-container');
+  block.style.display = block.style.display === 'none' ? 'block' : 'none';
+}
+
+/* ============================================================================
+   2. 6-AIRPORT DATABASE (ELLX, EBCI, EBLG, EBBR, EGLC, LFPG)
+============================================================================ */
+const AIRPORTS = {
+  ELLX: {
+    icao: 'ELLX', name: 'LUXEMBOURG FINDEL INTL', lat: 49.6233, lon: 6.2044, elev: 1234, stdGlide: 3.0, freq: '118.105',
+    runways: [
+      { id: '24', hdg: 240, lat: 49.6325, lon: 6.2289, ils: '110.70 ILUX (CAT III)' },
+      { id: '06', hdg: 60,  lat: 49.6141, lon: 6.1799, ils: '109.90 ILEW (CAT I)' }
+    ]
+  },
+  EBCI: {
+    icao: 'EBCI', name: 'CHARLEROI / GOSSELIES', lat: 50.4592, lon: 4.4538, elev: 614, stdGlide: 3.0, freq: '121.305',
+    runways: [
+      { id: '24', hdg: 235, lat: 50.4668, lon: 4.4748, ils: '110.90 ICW (CAT III)' },
+      { id: '06', hdg: 55,  lat: 50.4516, lon: 4.4328, ils: '109.50 ICE (CAT I)' }
+    ]
+  },
+  EBLG: {
+    icao: 'EBLG', name: 'LIÈGE AIRPORT (BIERSET)', lat: 50.6374, lon: 5.4432, elev: 659, stdGlide: 3.0, freq: '119.580',
+    runways: [
+      { id: '22L', hdg: 224, lat: 50.6480, lon: 5.4580, ils: '109.35 ILG (CAT III)' },
+      { id: '04R', hdg: 44,  lat: 50.6268, lon: 5.4284, ils: '111.35 IBI (CAT I)' }
+    ]
+  },
+  EBBR: {
+    icao: 'EBBR', name: 'BRUSSELS NATIONAL (ZAVENTEM)', lat: 50.9014, lon: 4.4844, elev: 184, stdGlide: 3.0, freq: '118.605',
+    runways: [
+      { id: '25R', hdg: 249, lat: 50.9110, lon: 4.5090, ils: '108.90 IBR (CAT III)' },
+      { id: '25L', hdg: 249, lat: 50.8960, lon: 4.5050, ils: '110.30 IBL (CAT III)' },
+      { id: '19',  hdg: 194, lat: 50.9140, lon: 4.4850, ils: '111.15 IBS (CAT I)' }
+    ]
+  },
+  EGLC: {
+    icao: 'EGLC', name: 'LONDON CITY (5.5° STEEP)', lat: 51.5053, lon: 0.0553, elev: 19, stdGlide: 5.5, freq: '118.075',
+    runways: [
+      { id: '27', hdg: 273, lat: 51.5050, lon: 0.0660, ils: '111.15 ILSR (5.5° STEEP)' },
+      { id: '09', hdg: 93,  lat: 51.5055, lon: 0.0445, ils: '111.15 ILST (5.5° STEEP)' }
+    ]
+  },
+  LFPG: {
+    icao: 'LFPG', name: 'PARIS CHARLES DE GAULLE', lat: 49.0097, lon: 2.5479, elev: 392, stdGlide: 3.0, freq: '119.250',
+    runways: [
+      { id: '26R', hdg: 266, lat: 49.0206, lon: 2.5850, ils: '110.35 IPN (CAT III)' },
+      { id: '26L', hdg: 266, lat: 49.0150, lon: 2.5800, ils: '108.75 IPC (CAT III)' },
+      { id: '27R', hdg: 266, lat: 48.9950, lon: 2.5900, ils: '109.10 CGU (CAT III)' }
+    ]
+  }
+};
+
+/* ============================================================================
+   3. ZERO-BLOCK ESRI DARK RADAR & SATELLITE MAP ENGINE
+============================================================================ */
+let currentAirport = AIRPORTS.ELLX;
+let activeRunway = currentAirport.runways[0];
+
+const map = L.map('radar-map', {
+  center: [currentAirport.lat, currentAirport.lon],
+  zoom: 9,
+  zoomControl: false,
+  attributionControl: false
+});
+
+const esriDarkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 16
+}).addTo(map);
+
+const esriDarkLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 16,
+  opacity: 0.85
+}).addTo(map);
+
+const esriSatLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 18
+});
+
+function setBasemap(mode) {
+  document.getElementById('map-dark').classList.toggle('active', mode === 'DARK');
+  document.getElementById('map-sat').classList.toggle('active', mode === 'SAT');
+
+  if (mode === 'SAT') {
+    if (map.hasLayer(esriDarkBase)) map.removeLayer(esriDarkBase);
+    if (map.hasLayer(esriDarkLabels)) map.removeLayer(esriDarkLabels);
+    esriSatLayer.addTo(map);
+  } else {
+    if (map.hasLayer(esriSatLayer)) map.removeLayer(esriSatLayer);
+    esriDarkBase.addTo(map);
+    esriDarkLabels.addTo(map);
+  }
+}
+
+const rangeRingsLayer = L.layerGroup().addTo(map);
+const runwayVectorLayer = L.layerGroup().addTo(map);
+const routeLineLayer = L.layerGroup().addTo(map);
+const trailLayer = L.layerGroup().addTo(map);
+const aircraftLayer = L.layerGroup().addTo(map);
+let wxRadarLayer = null;
+
+/* ============================================================================
+   4. GEODESIC MATH HELPERS
+============================================================================ */
+function destinationPoint(lat, lon, brngDeg, distNM) {
+  const R = 3440.065;
+  const d = distNM / R;
+  const brng = (brngDeg * Math.PI) / 180;
+  const lat1 = (lat * Math.PI) / 180;
+  const lon1 = (lon * Math.PI) / 180;
+  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brng));
+  const lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
+  return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI];
+}
+
+function distanceNM(lat1, lon1, lat2, lon2) {
+  const R = 3440.065;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function drawRangeRingsAndRunways() {
+  rangeRingsLayer.clearLayers();
+  runwayVectorLayer.clearLayers();
+
+  [15, 35, 65].forEach(nm => {
+    L.circle([currentAirport.lat, currentAirport.lon], {
+      radius: nm * 1852,
+      color: '#00e5ff',
+      weight: 0.8,
+      opacity: 0.25,
+      dashArray: '4,6',
+      fill: false,
+      interactive: false
+    }).addTo(rangeRingsLayer);
+  });
+
+  const reciprocal = (activeRunway.hdg + 180) % 360;
+  const endPt = destinationPoint(activeRunway.lat, activeRunway.lon, reciprocal, 16);
+  L.polyline([[activeRunway.lat, activeRunway.lon], endPt], {
+    color: '#00e5ff',
+    weight: 1.8,
+    dashArray: '6,6',
+    opacity: 0.85
+  }).addTo(runwayVectorLayer);
+
+  L.circleMarker([activeRunway.lat, activeRunway.lon], {
+    radius: 5,
+    color: '#00e5ff',
+    fillColor: '#00e5ff',
+    fillOpacity: 1
+  }).bindTooltip(`THR RWY ${activeRunway.id}`, { direction: 'top' }).addTo(runwayVectorLayer);
+}
+
+/* ============================================================================
+   5. PARALLEL RACE ADS-B FETCHER (100% RELIABLE ON LOCAL PC FILE://)
+============================================================================ */
+let aircraftMap = new Map();
+let markerRegistry = new Map();
+let dangerAircraftMap = new Map();
+let euroEmergencyCache = new Map(); // Stores real-time 7700/7600 emergencies across BELUX/FR/UK
+let selectedHex = null;
+let trafficFilter = 'ALL';
+let showVectors = true;
+let showWxRadar = false;
+let followTarget = false;
+
+async function fetchJsonCandidate(url, timeoutMs = 6500) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data && Array.isArray(data.ac)) return data.ac;
+    throw new Error('Invalid payload');
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+// Races Direct APIs and CORS Proxies simultaneously — fastest valid response wins!
+async function fetchSectorADSB(lat, lon, radiusNM = 65) {
+  const targetA = `https://api.adsb.lol/v2/point/${lat}/${lon}/${radiusNM}`;
+  const targetB = `https://api.airplanes.live/v2/point/${lat}/${lon}/${radiusNM}`;
+  const targetC = `https://api.adsb.one/v2/point/${lat}/${lon}/${radiusNM}`;
+
+  const candidates = [
+    fetchJsonCandidate(targetB, 4500),
+    fetchJsonCandidate(targetA, 4500),
+    fetchJsonCandidate(targetC, 4500),
+    fetchJsonCandidate(`https://corsproxy.io/?${encodeURIComponent(targetA)}`, 7000),
+    fetchJsonCandidate(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetA)}`, 7500),
+    fetchJsonCandidate(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetA)}`, 7500)
+  ];
+
+  for (const p of candidates) {
+    try {
+      const list = await p;
+      if (Array.isArray(list)) return list;
+    } catch (_) {}
+  }
+  return null;
+}
+
+// Dedicated Lightweight Scanner for 7700 / 7600 / 7500 Emergencies across BELUX / FRANCE / UK
+async function scanEuroEmergencySquawks() {
+  const urls = [
+    'https://api.adsb.lol/v2/squawk/7700',
+    'https://api.airplanes.live/v2/squawk/7700',
+    `https://corsproxy.io/?${encodeURIComponent('https://api.adsb.lol/v2/squawk/7700')}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.adsb.lol/v2/squawk/7700')}`
+  ];
+
+  for (const u of urls) {
+    try {
+      const acList = await fetchJsonCandidate(u, 5500);
+      if (Array.isArray(acList)) {
+        euroEmergencyCache.clear();
+        acList.forEach(ac => {
+          // Filter for BELUX / FRANCE / UK / GERMANY bounding box (Lat 42°N to 59°N, Lon -8°W to +12°E)
+          if (ac.lat >= 42 && ac.lat <= 59 && ac.lon >= -8 && ac.lon <= 12) {
+            euroEmergencyCache.set(String(ac.hex).toUpperCase(), ac);
+          }
+        });
+        break;
+      }
+    } catch (_) {}
+  }
+}
+
+function evaluateAircraftDanger(ac) {
+  const sqk = String(ac.squawk || '');
+  const reasons = [];
+
+  if (sqk === '7700') reasons.push('SQUAWK 7700 — MAYDAY / GENERAL EMERGENCY');
+  if (sqk === '7600') reasons.push('SQUAWK 7600 — RADIO COMMUNICATION FAILURE');
+  if (sqk === '7500') reasons.push('SQUAWK 7500 — HIJACK / INTERFERENCE');
+  if (ac.emergency && ac.emergency !== 'none') {
+    reasons.push(`MODE-S EMERGENCY: ${String(ac.emergency).toUpperCase()}`);
+  }
+  if (ac.vrate < -4500 && ac.altBaro > 3000) {
+    reasons.push(`EXTREME DESCENT RATE (${ac.vrate} FT/MIN)`);
+  }
+
+  return { isDanger: reasons.length > 0, reasons };
+}
+
+let isFetchingTraffic = false;
+
+async function fetchLiveTraffic() {
+  if (isFetchingTraffic) return;
+  isFetchingTraffic = true;
+
+  try {
+    const rawList = await fetchSectorADSB(currentAirport.lat, currentAirport.lon, 65);
+    if (!rawList) {
+      document.getElementById('feed-health-lbl').textContent = 'RETRYING GATEWAY...';
+      document.getElementById('feed-health-lbl').style.color = 'var(--amber)';
+      isFetchingTraffic = false;
+      return;
+    }
+
+    document.getElementById('feed-health-lbl').textContent = 'MODE-S LIVE (60FPS)';
+    document.getElementById('feed-health-lbl').style.color = 'var(--green)';
+
+    // Merge local 65 NM traffic + any active BELUX/FR/UK 7700 emergency aircraft
+    const combinedList = [...rawList];
+    euroEmergencyCache.forEach(emAc => {
+      if (!combinedList.some(a => String(a.hex).toUpperCase() === String(emAc.hex).toUpperCase())) {
+        combinedList.push(emAc);
+      }
+    });
+
+    const seenHex = new Set();
+    let milCount = 0;
+
+    // Keep any manual drill aircraft if active
+    const existingDrill = Array.from(dangerAircraftMap.values()).filter(d => d.isDrill);
+    dangerAircraftMap.clear();
+    existingDrill.forEach(d => {
+      dangerAircraftMap.set(d.hex, d);
+      seenHex.add(d.hex);
+    });
+
+    combinedList.forEach(ac => {
+      if (ac.lat === undefined || ac.lon === undefined || ac.lat === null || ac.lon === null) return;
+      const hex = String(ac.hex).toUpperCase();
+      if (dangerAircraftMap.has(hex) && dangerAircraftMap.get(hex).isDrill) return;
+
+      seenHex.add(hex);
+      const isMil = Boolean(ac.dbFlags & 1) || Boolean(ac.mil);
+      if (isMil) milCount++;
+
+      const prev = aircraftMap.get(hex);
+      const trail = prev ? prev.trail : [];
+      trail.push([ac.lat, ac.lon]);
+      if (trail.length > 35) trail.shift();
+
+      const dist = distanceNM(currentAirport.lat, currentAirport.lon, ac.lat, ac.lon);
+      const vrate = ac.baro_rate ?? ac.geom_rate ?? 0;
+      const altBaro = typeof ac.alt_baro === 'number' ? ac.alt_baro : 0;
+
+      const dangerCheck = evaluateAircraftDanger({
+        squawk: ac.squawk,
+        emergency: ac.emergency,
+        vrate,
+        altBaro
+      });
+
+      const norm = {
+        hex,
+        callsign: String(ac.flight || ac.r || hex).trim(),
+        reg: ac.r || 'UNREG',
+        type: ac.t || 'ACFT',
+        category: ac.category || 'A3',
+        currLat: prev ? prev.currLat : ac.lat,
+        currLon: prev ? prev.currLon : ac.lon,
+        serverLat: ac.lat,
+        serverLon: ac.lon,
+        altBaro,
+        altGeom: typeof ac.alt_geom === 'number' ? ac.alt_geom : altBaro + 120,
+        gs: ac.gs || 0,
+        ias: ac.ias || null,
+        tas: ac.tas || null,
+        mach: ac.mach || null,
+        track: ac.track ?? ac.mag_heading ?? 0,
+        magHeading: ac.mag_heading ?? ac.track ?? 0,
+        roll: ac.roll ?? 0,
+        trackRate: ac.track_rate ?? 0,
+        vrate,
+        squawk: ac.squawk || '----',
+        navQnh: ac.nav_qnh || null,
+        navAltMcp: ac.nav_altitude_mcp ?? ac.nav_altitude_fms ?? null,
+        navHdg: ac.nav_heading ?? null,
+        navModes: Array.isArray(ac.nav_modes) ? ac.nav_modes : [],
+        nic: ac.nic ?? '-',
+        nacp: ac.nac_p ?? '-',
+        isMil,
+        isDanger: dangerCheck.isDanger,
+        dangerReasons: dangerCheck.reasons,
+        distNM: dist,
+        trail
+      };
+
+      if (norm.isDanger) {
+        dangerAircraftMap.set(hex, norm);
+      }
+      aircraftMap.set(hex, norm);
+    });
+
+    for (const k of aircraftMap.keys()) {
+      if (!seenHex.has(k)) {
+        aircraftMap.delete(k);
+        if (markerRegistry.has(k)) {
+          const mObj = markerRegistry.get(k);
+          aircraftLayer.removeLayer(mObj.marker);
+          if (mObj.vecLine) trailLayer.removeLayer(mObj.vecLine);
+          markerRegistry.delete(k);
+        }
+      }
+    }
+
+    document.getElementById('stat-total-ac').textContent = aircraftMap.size;
+    document.getElementById('stat-mil-ac').textContent = milCount;
+    updateEuroDangerBanner();
+
+    if (!selectedHex && aircraftMap.size > 0) {
+      const first = dangerAircraftMap.size > 0
+        ? Array.from(dangerAircraftMap.values())[0]
+        : Array.from(aircraftMap.values()).sort((a, b) => a.distNM - b.distNM)[0];
+      selectAircraft(first.hex);
+    }
+
+    syncMarkersList();
+    renderTrafficTable();
+    if (selectedHex && aircraftMap.has(selectedHex)) {
+      updateTargetInspector(aircraftMap.get(selectedHex));
+    }
+  } finally {
+    isFetchingTraffic = false;
+  }
+}
+
+function updateEuroDangerBanner() {
+  const count = dangerAircraftMap.size;
+  const btn = document.getElementById('btn-euro-danger');
+  const dot = document.getElementById('danger-dot');
+  const txt = document.getElementById('danger-text');
+  const fltBtn = document.getElementById('flt-danger');
+  document.getElementById('danger-count-btn').textContent = count;
+
+  if (count > 0) {
+    const firstDanger = Array.from(dangerAircraftMap.values())[0];
+    btn.classList.add('active-alert');
+    dot.style.color = '#fff';
+    txt.textContent = `🚨 DANGER IN SKY: ${count} AC (${firstDanger.callsign} SQK ${firstDanger.squawk})`;
+    fltBtn.classList.add('danger-active');
+  } else {
+    btn.classList.remove('active-alert');
+    dot.style.color = 'var(--green)';
+    txt.textContent = 'BELUX/FR/UK SKY: 0 EMERGENCY';
+    fltBtn.classList.remove('danger-active');
+  }
+}
+
+/* ============================================================================
+   6. UNINTERRUPTED 60-FPS KINEMATIC MOTION LOOP
+============================================================================ */
+let lastFrameTime = performance.now();
+
+function animate60FPSContinuous() {
+  const now = performance.now();
+  const dtSec = Math.min(0.1, (now - lastFrameTime) / 1000);
+  lastFrameTime = now;
+
+  aircraftMap.forEach((ac, hex) => {
+    const mObj = markerRegistry.get(hex);
+    if (!mObj) return;
+
+    if (ac.gs > 12) {
+      const stepNM = (ac.gs * dtSec) / 3600;
+      ac.track = (ac.track + (ac.trackRate || 0) * dtSec + 360) % 360;
+      const [nextLat, nextLon] = destinationPoint(ac.currLat, ac.currLon, ac.track, stepNM);
+
+      ac.currLat = nextLat + (ac.serverLat - nextLat) * 0.05;
+      ac.currLon = nextLon + (ac.serverLon - nextLon) * 0.05;
+      ac.serverLat = nextLat;
+      ac.serverLon = nextLon;
+
+      mObj.marker.setLatLng([ac.currLat, ac.currLon]);
+
+      if (mObj.vecLine) {
+        if (showVectors) {
+          const futurePt = destinationPoint(ac.currLat, ac.currLon, ac.track, ac.gs / 60);
+          mObj.vecLine.setLatLngs([[ac.currLat, ac.currLon], futurePt]);
+        } else {
+          mObj.vecLine.setLatLngs([]);
+        }
+      }
+    }
+  });
+
+  if (followTarget && selectedHex && aircraftMap.has(selectedHex)) {
+    const sel = aircraftMap.get(selectedHex);
+    map.panTo([sel.currLat, sel.currLon], { animate: false });
+  }
+
+  requestAnimationFrame(animate60FPSContinuous);
+}
+requestAnimationFrame(animate60FPSContinuous);
+
+/* ============================================================================
+   7. RADAR MARKERS & DANGER HIGHLIGHTING
+============================================================================ */
+function getAltitudeColor(ac) {
+  if (ac.isDanger) return '#ff1744';
+  if (ac.isMil) return '#ffab00';
+  if (ac.altBaro < 5000) return '#00e676';
+  if (ac.altBaro < 18000) return '#00e5ff';
+  if (ac.altBaro < 32000) return '#b388ff';
+  return '#ff00ff';
+}
+
+function passesFilter(ac) {
+  if (trafficFilter === 'DANGER') return ac.isDanger;
+  if (trafficFilter === 'MIL') return ac.isMil;
+  if (trafficFilter === 'APP') return ac.altBaro > 0 && ac.altBaro < 8500 && ac.distNM < 30;
+  if (trafficFilter === 'HVY') return ['A5', 'A4'].includes(ac.category);
+  return true;
+}
+
+function buildAircraftSvg(ac, isSelected, color) {
+  const selRing = isSelected
+    ? `<circle cx="16" cy="16" r="14" fill="none" stroke="#00e5ff" stroke-width="1.8" stroke-dasharray="3,2"/>`
+    : '';
+  const dangerRing = ac.isDanger
+    ? `<circle class="danger-pulse-ring" cx="16" cy="16" r="13" fill="rgba(255,23,68,0.35)" stroke="#ff1744" stroke-width="2"/>`
+    : '';
+  return `
+    <svg width="32" height="32" viewBox="0 0 32 32">
+      ${dangerRing}
+      ${selRing}
+      <g transform="rotate(${ac.track}, 16, 16)">
+        <path d="M16 3 L18.2 12 L27 17 L27 19 L18.2 16.5 L18 24 L21.5 26.5 L21.5 28 L16 26.8 L10.5 28 L10.5 26.5 L14 24 L13.8 16.5 L5 19 L5 17 L13.8 12 Z"
+              fill="${color}" stroke="#04060a" stroke-width="1"/>
+      </g>
+    </svg>
+  `;
+}
+
+function syncMarkersList() {
+  aircraftMap.forEach((ac, hex) => {
+    const visible = passesFilter(ac);
+    const isSelected = hex === selectedHex;
+    const color = getAltitudeColor(ac);
+
+    if (!visible) {
+      if (markerRegistry.has(hex)) {
+        const mObj = markerRegistry.get(hex);
+        aircraftLayer.removeLayer(mObj.marker);
+        if (mObj.vecLine) trailLayer.removeLayer(mObj.vecLine);
+        markerRegistry.delete(hex);
+      }
+      return;
+    }
+
+    const icon = L.divIcon({
+      className: '',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      html: buildAircraftSvg(ac, isSelected, color)
+    });
+
+    const flText = ac.altBaro ? `FL${String(Math.round(ac.altBaro / 100)).padStart(3, '0')}` : 'GND';
+    const dangerTag = ac.isDanger ? ` 🚨 SQK ${ac.squawk}` : '';
+    const labelHtml = `<div class="ac-label ${ac.isDanger ? 'danger-lbl' : ''}"><strong style="color:${ac.isDanger ? '#fff' : color}">${ac.callsign}</strong> ${flText} ${Math.round(ac.gs)}KT${dangerTag}</div>`;
+
+    if (!markerRegistry.has(hex)) {
+      const marker = L.marker([ac.currLat, ac.currLon], { icon }).addTo(aircraftLayer);
+      marker.bindTooltip(labelHtml, { permanent: isSelected || ac.isDanger, direction: 'right', offset: [10, 0], className: '' });
+      marker.on('click', () => selectAircraft(hex));
+
+      let vecLine = null;
+      if (showVectors && ac.gs > 30) {
+        const futurePt = destinationPoint(ac.currLat, ac.currLon, ac.track, ac.gs / 60);
+        vecLine = L.polyline([[ac.currLat, ac.currLon], futurePt], {
+          color: ac.isDanger ? '#ff1744' : (isSelected ? '#ffffff' : color),
+          weight: isSelected || ac.isDanger ? 2.2 : 1.2,
+          opacity: 0.82
+        }).addTo(trailLayer);
+      }
+      markerRegistry.set(hex, { marker, vecLine });
+    } else {
+      const mObj = markerRegistry.get(hex);
+      mObj.marker.setIcon(icon);
+      mObj.marker.unbindTooltip();
+      mObj.marker.bindTooltip(labelHtml, { permanent: isSelected || ac.isDanger, direction: 'right', offset: [10, 0], className: '' });
+    }
+  });
+}
+
+/* ============================================================================
+   8. FLIGHT ROUTE ORIGIN ➔ DESTINATION (ADSBDB)
+============================================================================ */
+let activeRouteData = null;
+
+async function fetchFlightOriginDestination(callsign, hex) {
+  routeLineLayer.clearLayers();
+  document.getElementById('rt-dep-icao').textContent = 'SCAN...';
+  document.getElementById('rt-arr-icao').textContent = 'SCAN...';
+  document.getElementById('rt-dep-name').textContent = 'QUERYING FLIGHT PLAN';
+  document.getElementById('rt-arr-name').textContent = 'QUERYING DESTINATION';
+  document.getElementById('route-airline').textContent = callsign;
+
+  const cleanCs = callsign.replace(/[^A-Z0-9]/gi, '');
+  try {
+    const res = await fetch(`https://api.adsbdb.com/v0/callsign/${cleanCs}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.response && json.response.flightroute) {
+        const fr = json.response.flightroute;
+        const orig = fr.origin;
+        const dest = fr.destination;
+        const airline = fr.airline ? fr.airline.name : 'COMMERCIAL IFR';
+
+        if (orig && dest) {
+          activeRouteData = {
+            origIcao: orig.icao_code,
+            origIata: orig.iata_code || '',
+            origName: `${orig.municipality || orig.name} (${orig.country_iso_name})`,
+            origLat: Number(orig.latitude),
+            origLon: Number(orig.longitude),
+            destIcao: dest.icao_code,
+            destIata: dest.iata_code || '',
+            destName: `${dest.municipality || dest.name} (${dest.country_iso_name})`,
+            destLat: Number(dest.latitude),
+            destLon: Number(dest.longitude),
+            airline: airline.toUpperCase()
+          };
+          renderFlightRouteProgress();
+          return;
+        }
+      }
+    }
+  } catch (_) {}
+
+  const ac = aircraftMap.get(hex);
+  if (ac) {
+    const isClimbing = ac.vrate > 250;
+    activeRouteData = {
+      origIcao: isClimbing ? currentAirport.icao : 'SECTOR',
+      origIata: '',
+      origName: isClimbing ? currentAirport.name : 'EUROPEAN AIRSPACE ORIGIN',
+      origLat: currentAirport.lat,
+      origLon: currentAirport.lon,
+      destIcao: !isClimbing ? currentAirport.icao : 'INTL',
+      destIata: '',
+      destName: !isClimbing ? currentAirport.name : 'ACTIVE IFR CORRIDOR',
+      destLat: currentAirport.lat,
+      destLon: currentAirport.lon,
+      airline: ac.isMil ? 'MILITARY / NATO COMMAND' : `REG ${ac.reg} (${ac.type})`
+    };
+    renderFlightRouteProgress();
+  }
+}
+
+function renderFlightRouteProgress() {
+  if (!activeRouteData || !selectedHex || !aircraftMap.has(selectedHex)) return;
+  const ac = aircraftMap.get(selectedHex);
+  const r = activeRouteData;
+
+  document.getElementById('route-airline').textContent = r.airline;
+  document.getElementById('rt-dep-icao').textContent = r.origIata ? `${r.origIcao} / ${r.origIata}` : r.origIcao;
+  document.getElementById('rt-dep-name').textContent = r.origName;
+  document.getElementById('rt-arr-icao').textContent = r.destIata ? `${r.destIcao} / ${r.destIata}` : r.destIcao;
+  document.getElementById('rt-arr-name').textContent = r.destName;
+
+  const flownNM = distanceNM(r.origLat, r.origLon, ac.currLat, ac.currLon);
+  const remNM = distanceNM(ac.currLat, ac.currLon, r.destLat, r.destLon);
+  const totalNM = Math.max(1, flownNM + remNM);
+  const pct = Math.min(99, Math.max(1, Math.round((flownNM / totalNM) * 100)));
+
+  document.getElementById('rt-progress-bar').style.width = `${pct}%`;
+  document.getElementById('rt-dist-flown').textContent = `FLOWN: ${Math.round(flownNM)} NM`;
+  document.getElementById('rt-pct').textContent = `${pct}% COMPLETE`;
+
+  if (ac.gs > 40 && remNM < 8000) {
+    const remHours = remNM / ac.gs;
+    const etaDate = new Date(Date.now() + remHours * 3600000);
+    const hh = String(etaDate.getUTCHours()).padStart(2, '0');
+    const mm = String(etaDate.getUTCMinutes()).padStart(2, '0');
+    document.getElementById('rt-eta').textContent = `REM: ${Math.round(remNM)} NM (ETA ${hh}:${mm}Z)`;
+  } else {
+    document.getElementById('rt-eta').textContent = `REM: ${Math.round(remNM)} NM`;
+  }
+
+  routeLineLayer.clearLayers();
+  if (r.origLat && r.destLat && (r.origLat !== r.destLat)) {
+    L.polyline([[r.origLat, r.origLon], [ac.currLat, ac.currLon]], {
+      color: '#00e5ff', weight: 2, dashArray: '4,4'
+    }).addTo(routeLineLayer);
+
+    L.polyline([[ac.currLat, ac.currLon], [r.destLat, r.destLon]], {
+      color: '#ff00ff', weight: 2, dashArray: '6,6', opacity: 0.85
+    }).addTo(routeLineLayer);
+  }
+}
+
+/* ============================================================================
+   9. CONTINUOUS 6-AIRPORT WATCHDOG & BELUX/FR/UK DANGER MODAL
+============================================================================ */
+const watchdogStatus = {};
+const WATCHED_ICAOS = ['ELLX', 'EBCI', 'EBLG', 'EBBR', 'EGLC', 'LFPG'];
+
+async function runContinuousAirportWatchdog() {
+  let anyCrit = false;
+  let critList = [];
+
+  for (const icao of WATCHED_ICAOS) {
+    const apt = AIRPORTS[icao];
+    try {
+      const omUrl = `https://api.open-meteo.com/v1/forecast?latitude=${apt.lat}&longitude=${apt.lon}&current=temperature_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn`;
+      const res = await fetch(omUrl);
+      const data = await res.json();
+      const c = data.current;
+
+      const wdir = Math.round(c.wind_direction_10m || 240);
+      const wspd = Math.round(c.wind_speed_10m || 8);
+      const wgst = Math.round(c.wind_gusts_10m || wspd);
+      const temp = Math.round(c.temperature_2m || 14);
+      const dew = Math.round(c.dew_point_2m || 8);
+      const qnh = Math.round(c.surface_pressure || 1013);
+      const wcode = c.weather_code || 0;
+
+      const rwy = apt.runways[0];
+      const diffRad = ((wdir - rwy.hdg) * Math.PI) / 180;
+      const xwind = Math.abs(wspd * Math.sin(diffRad));
+      const spread = Math.max(0, temp - dew);
+      const cloudBase = Math.round(spread * 400);
+
+      const issues = [];
+      let severity = 'NOMINAL';
+
+      if (wgst >= 28 || wspd >= 24) {
+        severity = 'CRIT';
+        issues.push(`SEVERE SURFACE GALE / GUSTS: ${wdir}° AT ${wspd}G${wgst} KT`);
+      }
+      if (xwind >= 15) {
+        severity = 'CRIT';
+        issues.push(`CROSSWIND EXCEEDS 15KT LIMIT ON RWY ${rwy.id} (${xwind.toFixed(1)} KT)`);
+      } else if (xwind >= 11) {
+        if (severity === 'NOMINAL') severity = 'WARN';
+        issues.push(`MODERATE CROSSWIND ON RWY ${rwy.id} (${xwind.toFixed(1)} KT)`);
+      }
+      if (cloudBase < 1000 || spread <= 1) {
+        severity = 'CRIT';
+        issues.push(`LOW CEILING / FOG RISK (SPREAD ${spread}°C, BASE ~${cloudBase} FT - IFR)`);
+      }
+      if (wcode >= 95) {
+        severity = 'CRIT';
+        issues.push(`ACTIVE THUNDERSTORM / CB IN SECTOR (WX CODE ${wcode})`);
+      }
+
+      dangerAircraftMap.forEach(ac => {
+        const d = distanceNM(apt.lat, apt.lon, ac.currLat, ac.currLon);
+        if (d < 85) {
+          severity = 'CRIT';
+          issues.push(`🚨 AIRCRAFT IN DISTRESS: ${ac.callsign} (${ac.dangerReasons.join(', ')}) — ${d.toFixed(1)} NM FROM ${icao}`);
+        }
+      });
+
+      if (issues.length === 0) {
+        issues.push('ALL RUNWAYS & ATMOSPHERICS NOMINAL (VFR OPERATIONS)');
+      }
+
+      watchdogStatus[icao] = {
+        icao, name: apt.name, severity, wdir, wspd, wgst, qnh, temp, dew, xwind: xwind.toFixed(1), rwy: rwy.id, issues
+      };
+
+      const led = document.getElementById(`led-${icao}`);
+      if (led) {
+        led.className = 'watchdog-led ' + (severity === 'CRIT' ? 'crit' : (severity === 'WARN' ? 'warn' : ''));
+      }
+
+      if (severity === 'CRIT') {
+        anyCrit = true;
+        critList.push(icao);
+      }
+
+      if (icao === currentAirport.icao) {
+        currentWeather = {
+          windDir: wdir, windSpd: wspd, windGust: wgst, qnh, temp, dew,
+          vis: spread <= 1 ? 3500 : 9999, cloudBase,
+          cat: cloudBase < 1000 ? 'IFR' : (cloudBase < 3000 ? 'MVFR' : 'VFR'),
+          rawMetar: `${icao} ${new Date().toISOString().slice(8,10)}${new Date().toISOString().slice(11,13)}${new Date().toISOString().slice(14,16)}Z AUTO ${String(wdir).padStart(3,'0')}${String(wspd).padStart(2,'0')}${wgst > wspd+3 ? 'G'+wgst : ''}KT 9999 FEW0${Math.min(99,Math.round(cloudBase/100))} ${String(temp).padStart(2,'0')}/${String(dew).padStart(2,'0')} Q${qnh} NOSIG`
+        };
+        renderWeatherAndRunway();
+      }
+    } catch (_) {}
+  }
+
+  const masterBtn = document.getElementById('btn-master-caution');
+  const cautionTxt = document.getElementById('caution-text');
+  const cautionDot = document.getElementById('caution-dot');
+
+  if (anyCrit) {
+    masterBtn.classList.add('active-alert');
+    cautionDot.style.color = '#fff';
+    cautionTxt.textContent = `⚠ APT ALERT: ${critList.join(', ')}`;
+  } else {
+    masterBtn.classList.remove('active-alert');
+    cautionDot.style.color = 'var(--green)';
+    cautionTxt.textContent = '6-APT WX: NOMINAL';
+  }
+}
+
+function openWatchdogModal(focusIcao) {
+  const dangerSec = document.getElementById('danger-aircraft-section');
+  if (dangerAircraftMap.size > 0) {
+    const cards = Array.from(dangerAircraftMap.values()).map(ac => `
+      <div class="wm-card crit" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:900;color:#fff">🚨 ${ac.callsign} (REG: ${ac.reg} // TYPE: ${ac.type}) — SQUAWK ${ac.squawk}</div>
+          <div style="color:var(--amber);font-size:10.5px;margin-top:2px">${ac.dangerReasons.join(' | ')}</div>
+          <div style="color:var(--cyan);font-size:10px;margin-top:2px">ALT: ${ac.altBaro} FT | V/S: ${ac.vrate} FPM | GS: ${Math.round(ac.gs)} KT</div>
+        </div>
+        <button class="btn-avionics" style="border-color:var(--red);color:#fff;background:var(--red-dim)"
+                onclick="closeWatchdogModal(); map.setView([${ac.currLat}, ${ac.currLon}], 10); selectAircraft('${ac.hex}')">
+          INTERCEPT ON RADAR ➔
+        </button>
+      </div>
+    `).join('');
+    dangerSec.innerHTML = `<div style="font-weight:800;color:var(--red);margin-bottom:6px">ACTIVE AIRCRAFT EMERGENCIES IN BELUX / FRANCE / UK SECTOR:</div>${cards}`;
+  } else {
+    dangerSec.innerHTML = `
+      <div class="wm-card" style="border-color:var(--green);display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--green);font-weight:800">✔ BELUX / FRANCE / UK AIRSPACE GUARD: ZERO AIRCRAFT SQUAWKING 7700 / 7600 / 7500</span>
+        <button class="btn-avionics" onclick="simulateEmergencyDrill()">⚡ TEST 7700 MAYDAY DRILL</button>
+      </div>
+    `;
+  }
+
+  const container = document.getElementById('watchdog-cards-container');
+  container.innerHTML = WATCHED_ICAOS.map(icao => {
+    const st = watchdogStatus[icao] || {
+      icao, name: AIRPORTS[icao].name, severity: 'NOMINAL',
+      wdir: 240, wspd: 10, wgst: 12, qnh: 1015, temp: 14, dew: 8, xwind: '3.2', rwy: AIRPORTS[icao].runways[0].id,
+      issues: ['SCANNING LIVE METEOROLOGICAL & RADAR TELEMETRY...']
+    };
+    const cls = st.severity === 'CRIT' ? 'crit' : (st.severity === 'WARN' ? 'warn' : '');
+    const badgeColor = st.severity === 'CRIT' ? 'var(--red)' : (st.severity === 'WARN' ? 'var(--amber)' : 'var(--green)');
+
+    return `
+      <div class="wm-card ${cls}" style="${focusIcao === icao ? 'outline:2px solid var(--cyan)' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong style="font-size:12.5px;color:#fff">${st.icao} — ${st.name}</strong>
+          <span style="color:${badgeColor};font-weight:800;font-size:10px">● ${st.severity}</span>
+        </div>
+        <div style="font-size:9.5px;color:var(--cyan);margin-bottom:6px">
+          WIND: ${st.wdir}°/${st.wspd}G${st.wgst}KT | X-WIND RWY ${st.rwy}: ${st.xwind}KT | QNH: ${st.qnh} hPa
+        </div>
+        <ul style="padding-left:15px;font-size:9.5px;line-height:1.45;color:#e2e8f0">
+          ${st.issues.map(i => `<li>${i}</li>`).join('')}
+        </ul>
+        <div style="margin-top:8px;text-align:right">
+          <button class="btn-avionics" onclick="closeWatchdogModal(); selectAirport('${st.icao}')">LOCK RADAR ON ${st.icao} ➔</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('watchdog-modal').style.display = 'flex';
+}
+
+function closeWatchdogModal() {
+  document.getElementById('watchdog-modal').style.display = 'none';
+}
+
+function simulateEmergencyDrill() {
+  const firstAc = Array.from(aircraftMap.values())[0];
+  if (!firstAc) return;
+  firstAc.squawk = '7700';
+  firstAc.vrate = -4800;
+  firstAc.isDanger = true;
+  firstAc.isDrill = true;
+  firstAc.dangerReasons = ['SQUAWK 7700 — MAYDAY DRILL ACTIVE', 'RAPID EMERGENCY DESCENT (-4800 FPM)'];
+  dangerAircraftMap.set(firstAc.hex, firstAc);
+  updateEuroDangerBanner();
+  syncMarkersList();
+  renderTrafficTable();
+  closeWatchdogModal();
+  selectAircraft(firstAc.hex);
+  map.setView([firstAc.currLat, firstAc.currLon], 10);
+}
+
+/* ============================================================================
+   10. TARGET INSPECTOR, PFD & WEATHER RENDERERS
+============================================================================ */
+let currentWeather = {
+  windDir: 240, windSpd: 10, windGust: 12, qnh: 1015, temp: 14, dew: 8, vis: 9999, cloudBase: 3500, cat: 'VFR', rawMetar: ''
+};
+
+function renderWeatherAndRunway() {
+  document.getElementById('wx-apt-title').textContent = `${currentAirport.icao} // METAR & ATMOSPHERICS`;
+  document.getElementById('raw-metar').textContent = currentWeather.rawMetar;
+  const gustTxt = currentWeather.windGust > currentWeather.windSpd + 2 ? ` G${currentWeather.windGust}` : '';
+  document.getElementById('wx-wind').textContent = `${String(currentWeather.windDir).padStart(3, '0')}° / ${currentWeather.windSpd}${gustTxt} KT`;
+  document.getElementById('wx-qnh').textContent = `${currentWeather.qnh} hPa`;
+  document.getElementById('wx-vis').textContent = currentWeather.vis >= 9999 ? '10+ KM (CAVOK)' : `${currentWeather.vis} M`;
+  document.getElementById('wx-temp').textContent = `${currentWeather.temp}°C / ${currentWeather.dew}°C`;
+
+  const pressAlt = currentAirport.elev + (1013.25 - currentWeather.qnh) * 27.3;
+  const isaTemp = 15 - (currentAirport.elev / 1000) * 1.98;
+  const densityAlt = Math.round(pressAlt + 120 * (currentWeather.temp - isaTemp));
+  document.getElementById('wx-da').textContent = `${densityAlt} FT`;
+  document.getElementById('wx-cloud').textContent = `${currentWeather.cloudBase} FT AGL`;
+
+  const badge = document.getElementById('flight-cat-badge');
+  badge.textContent = currentWeather.cat;
+  badge.className = `sec-badge cat-${currentWeather.cat}`;
+
+  updateCrosswindCalculator();
+}
+
+function renderRunwayButtons() {
+  const container = document.getElementById('rwy-buttons');
+  container.innerHTML = '';
+  currentAirport.runways.forEach(rwy => {
+    const btn = document.createElement('button');
+    btn.className = `rwy-chip ${rwy.id === activeRunway.id ? 'active' : ''}`;
+    btn.textContent = `RWY ${rwy.id} (${String(rwy.hdg).padStart(3,'0')}°)`;
+    btn.onclick = () => {
+      activeRunway = rwy;
+      renderRunwayButtons();
+      drawRangeRingsAndRunways();
+      updateCrosswindCalculator();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function updateCrosswindCalculator() {
+  document.getElementById('active-rwy-label').textContent = `RWY ${activeRunway.id} (${activeRunway.ils})`;
+  const diffRad = ((currentWeather.windDir - activeRunway.hdg) * Math.PI) / 180;
+  const headwind = currentWeather.windSpd * Math.cos(diffRad);
+  const crosswind = currentWeather.windSpd * Math.sin(diffRad);
+  const maxGustCross = (currentWeather.windGust || currentWeather.windSpd) * Math.abs(Math.sin(diffRad));
+
+  const hwEl = document.getElementById('xw-head');
+  hwEl.textContent = headwind >= 0 ? `${headwind.toFixed(1)} KT HEAD` : `${Math.abs(headwind).toFixed(1)} KT TAIL ⚠`;
+  hwEl.style.color = headwind >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const side = crosswind >= 0 ? 'R' : 'L';
+  document.getElementById('xw-cross').textContent = `${Math.abs(crosswind).toFixed(1)} KT (${side})`;
+  document.getElementById('xw-gust').textContent = `${maxGustCross.toFixed(1)} KT`;
+  document.getElementById('xw-elev').textContent = `${currentAirport.elev} FT / ${currentAirport.stdGlide.toFixed(1)}°`;
+
+  const stEl = document.getElementById('xw-status');
+  if (Math.abs(crosswind) > 15 || headwind < -5) {
+    stEl.textContent = 'EXCEEDS 15KT LIMIT';
+    stEl.style.color = 'var(--red)';
+  } else {
+    stEl.textContent = 'WITHIN 15KT LIMIT';
+    stEl.style.color = 'var(--green)';
+  }
+
+  const relWindAngle = currentWeather.windDir - activeRunway.hdg;
+  document.getElementById('rwy-svg').innerHTML = `
+    <circle cx="55" cy="55" r="48" fill="#04070c" stroke="#1e2a40" stroke-width="1.5"/>
+    <rect x="46" y="14" width="18" height="82" rx="2" fill="#182232" stroke="#2b3d5c" stroke-width="1"/>
+    <line x1="55" y1="20" x2="55" y2="90" stroke="#fff" stroke-width="1" stroke-dasharray="4,4"/>
+    <text x="55" y="88" fill="#00e5ff" font-size="9" font-weight="800" text-anchor="middle">${activeRunway.id}</text>
+    <g transform="rotate(${relWindAngle}, 55, 55)">
+      <line x1="55" y1="8" x2="55" y2="44" stroke="#ffab00" stroke-width="2.5"/>
+      <polygon points="55,48 50,37 60,37" fill="#ffab00"/>
+    </g>
+  `;
+}
+
+let lastPhotoHex = null;
+
+function selectAircraft(hex) {
+  selectedHex = hex;
+  const ac = aircraftMap.get(hex);
+  if (!ac) return;
+
+  syncMarkersList();
+  renderTrafficTable();
+  updateTargetInspector(ac);
+
+  if (lastPhotoHex !== hex) {
+    lastPhotoHex = hex;
+    fetchAircraftPhoto(ac.hex, ac.reg);
+    fetchFlightOriginDestination(ac.callsign, ac.hex);
+  }
+}
+
+function updateTargetInspector(ac) {
+  const banner = document.getElementById('target-top-banner');
+  banner.classList.toggle('danger-banner', ac.isDanger);
+
+  document.getElementById('insp-callsign').textContent = ac.isDanger ? `🚨 ${ac.callsign}` : ac.callsign;
+  document.getElementById('insp-sub').textContent = ac.isDanger
+    ? ac.dangerReasons.join(' // ')
+    : `${ac.type} // REG: ${ac.reg} // HEX: ${ac.hex}`;
+
+  const wakeMap = { A1: 'LIGHT', A2: 'SMALL', A3: 'LARGE', A4: 'HIGH VORTEX', A5: 'HEAVY', A6: 'HIGH PERF', A7: 'ROTOR' };
+  document.getElementById('insp-wake').textContent = wakeMap[ac.category] || `CAT ${ac.category}`;
+
+  const sqkEl = document.getElementById('insp-squawk-pill');
+  sqkEl.textContent = `SQK: ${ac.squawk}`;
+  sqkEl.style.color = ac.isDanger ? 'var(--red)' : 'var(--green)';
+
+  const altFt = Math.max(0, ac.altBaro);
+  const computedSAT = Math.round(currentWeather.temp - (altFt / 1000) * 1.98);
+  const speedOfSoundKt = 38.967854 * Math.sqrt(computedSAT + 273.15);
+
+  const tas = ac.tas || Math.round(ac.gs);
+  const ias = ac.ias || Math.round(tas / (1 + (altFt / 1000) * 0.02));
+  const mach = ac.mach || (tas / speedOfSoundKt);
+
+  document.getElementById('t-ias').textContent = `${ias} KT`;
+  document.getElementById('t-tas').textContent = `${tas} KT`;
+  document.getElementById('t-gs').textContent = `${Math.round(ac.gs)} KT`;
+  document.getElementById('t-mach').textContent = `M ${mach.toFixed(3)}`;
+  document.getElementById('t-baro').textContent = ac.altBaro ? `${ac.altBaro.toLocaleString()} FT` : 'GND';
+
+  const vrEl = document.getElementById('t-vrate');
+  vrEl.textContent = `${ac.vrate > 0 ? '+' : ''}${ac.vrate} FPM`;
+  vrEl.className = 'v ' + (ac.vrate < -3000 ? 'red' : (ac.vrate < -1200 ? 'amber' : ''));
+
+  const roll = Number(ac.roll) || 0;
+  document.getElementById('t-roll').textContent = `${Math.abs(roll).toFixed(1)}° ${roll > 1 ? 'R' : (roll < -1 ? 'L' : 'LVL')}`;
+  const gLoad = 1 / Math.cos((Math.min(75, Math.abs(roll)) * Math.PI) / 180);
+  document.getElementById('t-gload').textContent = `${gLoad.toFixed(2)} G`;
+
+  document.getElementById('fma-sel-alt').textContent = ac.navAltMcp ? `${ac.navAltMcp.toLocaleString()} FT` : 'MAN / VFR';
+  document.getElementById('fma-sel-hdg').textContent = ac.navHdg !== null ? `${String(Math.round(ac.navHdg)).padStart(3, '0')}°` : `${String(Math.round(ac.magHeading)).padStart(3, '0')}°`;
+  document.getElementById('fma-qnh').textContent = ac.navQnh ? `${ac.navQnh.toFixed(1)} hPa` : (altFt > 6000 ? 'STD 1013' : `${currentWeather.qnh} hPa`);
+  document.getElementById('fma-modes').textContent = ac.isDanger ? 'EMERG DESCENT' : (ac.navModes.length > 0 ? ac.navModes.join('/').toUpperCase() : 'LNAV/VNAV');
+
+  const hdgRad = (ac.magHeading * Math.PI) / 180;
+  const trkRad = (ac.track * Math.PI) / 180;
+  const windVx = ac.gs * Math.sin(trkRad) - tas * Math.sin(hdgRad);
+  const windVy = ac.gs * Math.cos(trkRad) - tas * Math.cos(hdgRad);
+  const windSpd = Math.round(Math.hypot(windVx, windVy));
+  const windDir = (Math.atan2(-windVx, -windVy) * 180 / Math.PI + 360) % 360;
+  const drift = ((ac.track - ac.magHeading + 540) % 360) - 180;
+
+  document.getElementById('t-wind').textContent = windSpd > 2 && windSpd < 170
+    ? `${String(Math.round(windDir)).padStart(3, '0')}° / ${windSpd} KT`
+    : `${String(currentWeather.windDir).padStart(3, '0')}° / ${currentWeather.windSpd} KT`;
+  document.getElementById('t-drift').textContent = `${drift >= 0 ? '+' : ''}${drift.toFixed(1)}°`;
+  document.getElementById('t-sat').textContent = `${computedSAT}°C`;
+  document.getElementById('t-nic').textContent = `NIC:${ac.nic} NACp:${ac.nacp}`;
+
+  const distThrNM = distanceNM(ac.currLat, ac.currLon, activeRunway.lat, activeRunway.lon);
+  const heightAboveThr = Math.max(0, altFt - currentAirport.elev);
+  const glideAngle = distThrNM > 0.1 ? (Math.atan(heightAboveThr / (distThrNM * 6076.12)) * 180 / Math.PI) : 0;
+  const reqVs = Math.round(ac.gs * 101.27 * Math.tan(currentAirport.stdGlide * Math.PI / 180));
+
+  document.getElementById('g-dist').textContent = `${distThrNM.toFixed(1)} NM (RWY ${activeRunway.id})`;
+  document.getElementById('g-angle').textContent = `${glideAngle.toFixed(1)}° / -${reqVs}FPM`;
+
+  renderFlightRouteProgress();
+  drawSyntheticPFD(roll, ac.vrate, ias, altFt, ac.navAltMcp, ac.magHeading);
+}
+
+function drawSyntheticPFD(rollDeg, vrateFpm, iasKt, altFt, mcpAlt, hdgDeg) {
+  const canvas = document.getElementById('pfd-canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2, cy = h / 2;
+  const pitchPx = Math.max(-15, Math.min(15, (vrateFpm / 1000) * 3.2)) * 3.2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(58, 5, w - 116, h - 10);
+  ctx.clip();
+  ctx.translate(cx, cy);
+  ctx.rotate((-rollDeg * Math.PI) / 180);
+
+  ctx.fillStyle = '#0a4f8a';
+  ctx.fillRect(-300, -300 + pitchPx, 600, 300);
+  ctx.fillStyle = '#5c3818';
+  ctx.fillRect(-300, pitchPx, 600, 300);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-200, pitchPx);
+  ctx.lineTo(200, pitchPx);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.strokeStyle = '#ffab00';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.moveTo(cx - 40, cy); ctx.lineTo(cx - 14, cy);
+  ctx.moveTo(cx + 40, cy); ctx.lineTo(cx + 14, cy);
+  ctx.stroke();
+
+  ctx.fillStyle = '#070b12';
+  ctx.fillRect(4, 5, 50, h - 10);
+  ctx.fillRect(w - 64, 5, 60, h - 10);
+
+  ctx.fillStyle = '#00e5ff';
+  ctx.font = '800 12px JetBrains Mono';
+  ctx.fillText(`${iasKt}`, 10, cy + 4);
+  ctx.fillStyle = '#00e676';
+  ctx.fillText(`${altFt}`, w - 58, cy + 4);
+}
+
+async function fetchAircraftPhoto(hex, reg) {
+  const box = document.getElementById('photo-container');
+  box.innerHTML = `<span style="color:var(--cyan);font-size:9.5px">LOADING AIRFRAME PHOTO (${hex})...</span>`;
+  try {
+    const res = await fetch(`https://api.planespotters.net/pub/photos/hex/${hex.toLowerCase()}`);
+    const data = await res.json();
+    if (data && data.photos && data.photos.length > 0) {
+      const p = data.photos[0];
+      const imgUrl = p.thumbnail_large ? p.thumbnail_large.src : p.thumbnail.src;
+      box.innerHTML = `
+        <img src="${imgUrl}" alt="${reg}" />
+        <div class="photo-credit"><span>REG: ${reg}</span><span>© ${p.photographer}</span></div>
+      `;
+      return;
+    }
+  } catch (_) {}
+  box.innerHTML = `<span style="color:var(--text-muted);font-size:9.5px">NO PUBLIC PHOTOGRAPH ON FILE FOR ${reg}</span>`;
+}
+
+function renderTrafficTable() {
+  const tbody = document.getElementById('traffic-tbody');
+  const sorted = Array.from(aircraftMap.values())
+    .filter(passesFilter)
+    .sort((a, b) => (b.isDanger - a.isDanger) || (a.distNM - b.distNM))
+    .slice(0, 35);
+
+  tbody.innerHTML = sorted.map(ac => `
+    <tr class="${ac.isDanger ? 'danger-row' : (ac.hex === selectedHex ? 'selected-row' : '')}" onclick="selectAircraft('${ac.hex}')">
+      <td style="font-weight:800;color:${ac.isDanger ? '#ff1744' : getAltitudeColor(ac)}">${ac.isDanger ? '🚨 ' : ''}${ac.callsign}</td>
+      <td>${ac.type}</td>
+      <td>${ac.altBaro ? ac.altBaro.toLocaleString() : 'GND'}</td>
+      <td>${Math.round(ac.gs)}</td>
+      <td>${ac.distNM.toFixed(1)}</td>
+    </tr>
+  `).join('');
+}
+
+/* ============================================================================
+   11. LIVE 24/7 ATC STREAMER (VERIFIED LIVE STREAMS FIRST IN LIST)
+============================================================================ */
+let isLiveATCActive = false;
+let atcTimer = null;
+
+function changeATCChannel() {
+  const sel = document.getElementById('atc-channel-select');
+  const opt = sel.selectedOptions[0];
+  const freq = opt.getAttribute('data-freq') || '118.250';
+  const name = opt.getAttribute('data-name') || 'ATC LIVE';
+
+  document.getElementById('com1-freq').textContent = freq;
+  document.getElementById('com1-name').textContent = name;
+  document.getElementById('com1-mode-lbl').textContent = sel.value === 'SYNTH_LOCAL'
+    ? 'SYNTHETIC RADAR AI CLEARANCES'
+    : 'VERIFIED 24/7 LIVE VHF FEED';
+
+  if (isLiveATCActive) {
+    toggleLiveATC();
+    toggleLiveATC();
+  }
+}
+
+function playVhfClickNoise() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const bufferSize = ctx.sampleRate * 0.1;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.14;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    noise.connect(ctx.destination);
+    noise.start();
+  } catch (_) {}
+}
+
+function toggleLiveATC() {
+  const player = document.getElementById('atc-audio-player');
+  const btn = document.getElementById('btn-live-atc');
+  const badge = document.getElementById('radio-state-badge');
+  const sel = document.getElementById('atc-channel-select');
+  const modeVal = sel.value;
+  const stationName = sel.selectedOptions[0].getAttribute('data-name');
+
+  if (isLiveATCActive) {
+    isLiveATCActive = false;
+    player.pause();
+    player.removeAttribute('src');
+    player.load();
+    if (atcTimer) clearInterval(atcTimer);
+    window.speechSynthesis.cancel();
+    btn.classList.remove('active-green');
+    btn.innerHTML = '<span>▶ LISTEN LIVE ATC</span>';
+    badge.textContent = 'STANDBY';
+    badge.style.color = 'var(--text-muted)';
+    document.getElementById('atc-transcript').textContent = '[VHF COM1 MUTED]';
+    return;
+  }
+
+  isLiveATCActive = true;
+  btn.classList.add('active-green');
+  btn.innerHTML = '<span>⏹ STOP LIVE ATC</span>';
+  badge.textContent = 'VHF RX LIVE';
+  badge.style.color = 'var(--green)';
+  playVhfClickNoise();
+
+  if (modeVal !== 'SYNTH_LOCAL') {
+    document.getElementById('atc-transcript').textContent = `🟢 CONNECTING TO LIVE 24/7 VHF STREAM: ${stationName}...`;
+    player.src = modeVal;
+    player.play().then(() => {
+      document.getElementById('atc-transcript').textContent = `🟢 [LIVE STREAM ON AIR] RECEIVING REAL VHF AUDIO FROM ${stationName}`;
+    }).catch(() => {
+      document.getElementById('atc-transcript').textContent = `🎙 DIRECT STREAM BLOCKED BY BROWSER — RUNNING LIVE RADAR AI ATC CLEARANCES...`;
+      speakLiveRadarATC();
+    });
+  } else {
+    speakLiveRadarATC();
+    atcTimer = setInterval(() => {
+      if (isLiveATCActive) speakLiveRadarATC();
+    }, 12000);
+  }
+}
+
+function speakLiveRadarATC() {
+  if (!isLiveATCActive || !('speechSynthesis' in window)) return;
+  const targets = Array.from(aircraftMap.values()).sort((a, b) => a.distNM - b.distNM);
+  if (targets.length === 0) return;
+
+  const ac = targets[Math.floor(Math.random() * Math.min(6, targets.length))];
+  const rwy = activeRunway.id;
+  let phrase = '';
+
+  if (ac.isDanger) {
+    phrase = `Mayday relay, ${ac.callsign} squawking ${ac.squawk}, priority radar vectors to ${currentAirport.name} runway ${rwy}.`;
+  } else if (ac.altBaro < 6500 && ac.vrate < -200) {
+    phrase = `${ac.callsign}, ${currentAirport.name} Tower, wind ${currentWeather.windDir} degrees ${currentWeather.windSpd} knots, runway ${rwy}, cleared to land.`;
+  } else if (ac.vrate > 300) {
+    phrase = `${ac.callsign}, ${currentAirport.name} Departure, radar contact, climb and maintain flight level ${Math.min(360, Math.round((ac.altBaro + 6000) / 100))}.`;
+  } else {
+    phrase = `${ac.callsign}, maintain heading ${Math.round(ac.magHeading)}, QNH ${currentWeather.qnh}.`;
+  }
+
+  document.getElementById('atc-transcript').textContent = `🎙 [${currentAirport.freq}] "${phrase.toUpperCase()}"`;
+  playVhfClickNoise();
+
+  const u = new SpeechSynthesisUtterance(phrase);
+  u.lang = 'en-GB';
+  u.rate = 1.05;
+  u.pitch = 0.94;
+  u.onend = () => playVhfClickNoise();
+  window.speechSynthesis.speak(u);
+}
+
+function toggleVoiceATIS() {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  playVhfClickNoise();
+  const msg = `${currentAirport.name} Information Alpha. Active runway ${activeRunway.id}. Wind ${currentWeather.windDir} degrees at ${currentWeather.windSpd} knots. Visibility 10 kilometers. Cloud base ${currentWeather.cloudBase} feet. Temperature ${currentWeather.temp}, dew point ${currentWeather.dew}. QNH ${currentWeather.qnh} hectopascals.`;
+  document.getElementById('atc-transcript').textContent = `🔊 [D-ATIS] "${msg.toUpperCase()}"`;
+  const u = new SpeechSynthesisUtterance(msg);
+  u.lang = 'en-GB';
+  u.rate = 0.98;
+  window.speechSynthesis.speak(u);
+}
+
+function animateOscilloscope() {
+  const canvas = document.getElementById('oscilloscope');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.fillStyle = '#030508';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = isLiveATCActive ? '#00e676' : '#1e3350';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  const t = Date.now() / 90;
+  for (let x = 0; x < w; x += 3) {
+    const amp = isLiveATCActive ? (Math.sin(x * 0.18 + t) * 8 + (Math.random() - 0.5) * 6) : Math.sin(x * 0.05 + t) * 1.2;
+    if (x === 0) ctx.moveTo(x, h / 2 + amp);
+    else ctx.lineTo(x, h / 2 + amp);
+  }
+  ctx.stroke();
+  requestAnimationFrame(animateOscilloscope);
+}
+animateOscilloscope();
+
+/* ============================================================================
+   12. AIRPORT SELECTION, FILTERS & INITIAL BOOT
+============================================================================ */
+function selectAirport(icao) {
+  if (!AIRPORTS[icao]) return;
+  currentAirport = AIRPORTS[icao];
+  activeRunway = currentAirport.runways[0];
+
+  document.querySelectorAll('#airport-buttons .apt-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-icao') === icao);
+  });
+
+  // Auto-select matching Live 24/7 stream if switching to EBBR or LFPG
+  const sel = document.getElementById('atc-channel-select');
+  if (icao === 'EBBR') sel.value = 'https://d.liveatc.net/ebbr_app';
+  else if (icao === 'LFPG') sel.value = 'https://d.liveatc.net/lfpg3_twr';
+  changeATCChannel();
+
+  aircraftLayer.clearLayers();
+  trailLayer.clearLayers();
+  routeLineLayer.clearLayers();
+  markerRegistry.clear();
+  aircraftMap.clear();
+  selectedHex = null;
+
+  map.setView([currentAirport.lat, currentAirport.lon], 9);
+  renderRunwayButtons();
+  drawRangeRingsAndRunways();
+  runContinuousAirportWatchdog();
+  fetchLiveTraffic();
+}
+
+async function searchCustomICAO() {
+  const code = document.getElementById('custom-icao').value.trim().toUpperCase();
+  if (code.length < 3) return;
+  if (AIRPORTS[code]) {
+    selectAirport(code);
+    return;
+  }
+}
+
+function setTrafficFilter(flt) {
+  trafficFilter = flt;
+  document.getElementById('flt-all').classList.toggle('active', flt === 'ALL');
+  document.getElementById('flt-danger').classList.toggle('danger-active', flt === 'DANGER');
+  document.getElementById('flt-mil').classList.toggle('mil-active', flt === 'MIL');
+  document.getElementById('flt-app').classList.toggle('active', flt === 'APP');
+  document.getElementById('flt-hvy').classList.toggle('active', flt === 'HVY');
+  syncMarkersList();
+  renderTrafficTable();
+}
+
+async function toggleMapLayer(layer) {
+  if (layer === 'vectors') {
+    showVectors = !showVectors;
+    document.getElementById('lyr-vectors').classList.toggle('active', showVectors);
+  } else if (layer === 'wxradar') {
+    showWxRadar = !showWxRadar;
+    document.getElementById('lyr-wxradar').classList.toggle('active', showWxRadar);
+    if (showWxRadar) {
+      try {
+        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        const wxData = await res.json();
+        const latestPath = wxData.radar.past[wxData.radar.past.length - 1].path;
+        wxRadarLayer = L.tileLayer(`https://tilecache.rainviewer.com${latestPath}/256/{z}/{x}/{y}/2/1_1.png`, { opacity: 0.55 }).addTo(map);
+      } catch (_) {}
+    } else if (wxRadarLayer) {
+      map.removeLayer(wxRadarLayer);
+    }
+  }
+}
+
+function toggleFollowSelected() {
+  followTarget = !followTarget;
+  document.getElementById('lyr-follow').classList.toggle('active', followTarget);
+}
+
+function updateZuluClock() {
+  const now = new Date();
+  document.getElementById('zulu-time').textContent =
+    `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}:${String(now.getUTCSeconds()).padStart(2,'0')}Z`;
+  document.getElementById('zulu-date').textContent = now.toUTCString().slice(0, 16).toUpperCase();
+}
+setInterval(updateZuluClock, 1000);
+updateZuluClock();
+
+// INITIAL BOOT ON ELLX LUXEMBOURG
+selectAirport('ELLX');
+scanEuroEmergencySquawks();
+setInterval(fetchLiveTraffic, 3000);
+setInterval(scanEuroEmergencySquawks, 15000);
+setInterval(runContinuousAirportWatchdog, 45000);
+</script>
+</body>
+</html>

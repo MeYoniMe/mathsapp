@@ -2,30 +2,24 @@
 ================================================================================
   PROPRIETARY SOFTWARE LICENSE — ALL RIGHTS RESERVED
 ================================================================================
-  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v8.0 PRO)
+  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v8.1 PRO)
   DEDICATED TO: MATHÉO B. (Future Airline & Aeronautical Pilot Edition)
   ARCHITECTURE: Visuals by Yoni Brd
   COPYRIGHT   : © 2026 Mathéo B. & Visuals by Yoni Brd. All Rights Reserved.
-
-  LEGAL NOTICE:
-  This source code, native OpenSky + Mode-S EHS fusion engine, 60-FPS kinematic
-  extrapolator, instant dual-voice ATC/Pilot readback synthesizer, and BELUX/FR/UK
-  emergency watchdog are the exclusive intellectual property of Mathéo B. and
-  Visuals by Yoni Brd. Unauthorized reproduction is strictly prohibited.
 ================================================================================
 -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
   <meta charset="UTF-8" />
+  <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MATH'S APP v8.0 // OPENSKY NATIVE 60FPS RADAR & INSTANT ATC</title>
+  <title>MATH'S APP v8.1 // TACTICAL AVIONICS & LIVE 60FPS RADAR</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
 
-  <!-- Leaflet Vector Mapping Engine -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -78,7 +72,7 @@
       width: 100vw;
     }
 
-    /* ======================= TOP GLARESHIELD BAR ======================= */
+    /* TOP GLARESHIELD BAR */
     .top-bar {
       background: linear-gradient(180deg, #11192b 0%, #080c14 100%);
       border-bottom: 1px solid var(--border-bright);
@@ -122,196 +116,7 @@
     .brand-title span { color: var(--cyan); }
     .brand-sub { font-size: 8.5px; color: var(--green); font-weight: 700; display: block; }
 
-    /* 6-AIRPORT CONTINUOUS WATCHDOG SELECTOR */
-    .airport-selector {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex-wrap: nowrap;
-    }
-
-    .apt-btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border-dim);
-      color: var(--text-main);
-      padding: 4px 9px;
-      border-radius: 3px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      line-height: 1.15;
-      min-width: 76px;
-    }
-
-    .apt-btn-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      gap: Merci pour cette capture d'écran (`meyonime.github.io/mathsapp/`), elle vaut de l'or ! En regardant ton image, j'ai trouvé **la ligne exacte dans l'en-tête HTML de la v7.0** qui a provoqué les **deux bugs d'un seul coup** (0 avion + page blanche LiveATC)[cite: 2] :
-
----
-
-### Le Coupable Démasqué sur ta Capture d'Écran : `<meta name="referrer" content="no-referrer" />`
-
-Dans la v7.0, j'avais ajouté cette balise `<meta name="referrer" content="no-referrer">` tout en haut du code pour essayer de contourner la sécurité de LiveATC. **Or, elle a produit l'effet inverse exact :**
-
-1. **Pourquoi tu as `LIVE TARGETS (0 AC)` et `60FPS INERTIAL COAST`[cite: 2] :**
-   * Les serveurs gratuits de trafic aérien (`airplanes.live`, `adsb.lol`, `corsproxy.io`) **bloquent et rejettent à 100 %** les requêtes qui cachent leur provenance (`no-referrer`) car ils les prennent pour des robots pirates ! En prime, la source **OpenSky Network** (qui fonctionnait au moment où tu as vu les avions apparaître tout à l'heure) avait été retirée de la v7.0 !
-2. **Pourquoi la petite fenêtre `liveatc.net/hlisten.php?mount=ebbr_app` est toute blanche[cite: 2] :**
-   * Le lecteur `hlisten.php` de LiveATC vérifie que tu viens bien d'une page valide et exige une vérification anti-bot Cloudflare. Si on l'appelle avec `no-referrer` ou directement sur `hlisten.php`, Cloudflare renvoie une page blanche vide[cite: 2] !
-3. **Pourquoi le bouton `STOP ATC AUDIO` est allumé mais muet[cite: 2] :**
-   * Le flux `https://d.liveatc.net/ebbr_app` reste bloqué en "chargement infini" sans jamais déclencher d'erreur dans Chrome, ce qui empêchait le **Dialogue Vocal Contrôleur ⇄ Pilote** de démarrer[cite: 2] !
-
----
-
-### Les 3 Solutions Chirurgicales dans la Version 8.0 ci-dessous :
-
-1. **Suppression immédiate de `no-referrer` + Retour d'OpenSky Network en Priorité N°1 :**
-   * **OpenSky Network (`opensky-network.org`)** est le réseau académique officiel européen (basé en Suisse/Allemagne). Il autorise **officiellement et nativement (`Access-Control-Allow-Origin: *`)** ton site `meyonime.github.io` sans aucun proxy !
-   * En parallèle, j'ai ajouté **`adsb.fi`** (le réseau open-source finlandais ultra-rapide qui autorise GitHub Pages) + **`airplanes.live`** + **un Simulateur de Trafic Réel de Secours** (si jamais toutes les API mondiales coupent ta connexion pendant 4 secondes, l'application injecte instantanément les vrais vols réguliers du secteur — Luxair, Cargolux, Ryanair, Brussels Airlines, Air France, British Airways — pour que ton radar **ne soit JAMAIS à 0 avion**).
-2. **Audio ATC Immédiat (Zéro Attente) :**
-   * Dès que tu cliques sur **`▶ START ATC CONVERSATIONS`**, le **Dialogue Vocal Temps Réel Contrôleur ⇄ Pilote (2 voix distinctes)** démarre **à la première seconde** sans attendre après un flux MP3 bloqué ! Tu vas entendre immédiatement la Tour parler aux avions présents sur ton écran et les pilotes répondre avec le vrai bruit de squelch VHF.
-3. **Plus jamais de fenêtre blanche LiveATC :**
-   * Suppression définitive du lien buggé `hlisten.php`[cite: 2]. Si tu cliques sur le bouton externe, il ouvre le portail officiel sécurisé avec les lecteurs débloqués.
-
----
-
-### Le Code Complet Débloqué (`index.html` — Version 8.0 "GITHUB PAGES NATIVE")
-
-Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.github.io/mathsapp/`[cite: 2] :
-
-```html
-<!--
-================================================================================
-  PROPRIETARY SOFTWARE LICENSE — ALL RIGHTS RESERVED
-================================================================================
-  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v8.0 PRO)
-  DEDICATED TO: MATHÉO B. (Future Airline & Aeronautical Pilot Edition)
-  ARCHITECTURE: Visuals by Yoni Brd
-  COPYRIGHT   : © 2026 Mathéo B. & Visuals by Yoni Brd. All Rights Reserved.
-
-  LEGAL NOTICE:
-  This source code, OpenSky/ADSB.fi native telemetry engine, 60-FPS kinematic
-  extrapolator, dual-voice ATC/Pilot readback synthesizer, and BELUX/FR/UK
-  emergency squawk guard are the exclusive intellectual property of Mathéo B.
-  and Visuals by Yoni Brd. Unauthorized reproduction is strictly prohibited.
-================================================================================
--->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MATH'S APP v8.0 // TACTICAL AVIONICS & LIVE 60FPS RADAR</title>
-
-  <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-  <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-  <link href="[https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@600;800;900&display=swap](https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@600;800;900&display=swap)" rel="stylesheet">
-
-  <!-- Leaflet Vector Engine -->
-  <link rel="stylesheet" href="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.css](https://unpkg.com/leaflet@1.9.4/dist/leaflet.css)" />
-  <script src="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.js](https://unpkg.com/leaflet@1.9.4/dist/leaflet.js)"></script>
-
-  <style>
-    :root {
-      --bg-deep: #04060a;
-      --bg-panel: #0a0e17;
-      --bg-card: #101726;
-      --bg-card-hover: #172238;
-      --border-dim: #1c283d;
-      --border-bright: #2c4063;
-      --cyan: #00e5ff;
-      --cyan-dim: rgba(0, 229, 255, 0.14);
-      --magenta: #ff00ff;
-      --magenta-dim: rgba(255, 0, 255, 0.15);
-      --green: #00e676;
-      --green-dim: rgba(0, 230, 118, 0.15);
-      --amber: #ffab00;
-      --amber-dim: rgba(255, 171, 0, 0.16);
-      --red: #ff1744;
-      --red-dim: rgba(255, 23, 68, 0.25);
-      --text-main: #e2e8f0;
-      --text-muted: #7e91ad;
-      --font-mono: 'JetBrains Mono', monospace;
-      --font-hud: 'Orbitron', sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    html, body {
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background-color: var(--bg-deep);
-      color: var(--text-main);
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-    }
-
-    .cockpit-shell {
-      display: grid;
-      grid-template-rows: 54px 1fr 24px;
-      height: 100vh;
-      width: 100vw;
-    }
-
-    /* ======================= TOP GLARESHIELD BAR ======================= */
-    .top-bar {
-      background: linear-gradient(180deg, #11192b 0%, #080c14 100%);
-      border-bottom: 1px solid var(--border-bright);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      gap: 8px;
-      z-index: 1000;
-    }
-
-    .brand-block {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-right: 1px solid var(--border-dim);
-      padding-right: 10px;
-      flex-shrink: 0;
-    }
-
-    .brand-logo {
-      width: 30px;
-      height: 30px;
-      border: 1.5px solid var(--cyan);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 229, 255, 0.08);
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
-    }
-
-    .brand-title {
-      font-family: var(--font-hud);
-      font-size: 13.5px;
-      font-weight: 900;
-      letter-spacing: 1.2px;
-      color: #fff;
-    }
-
-    .brand-title span { color: var(--cyan); }
-    .brand-sub { font-size: 8.5px; color: var(--text-muted); display: block; }
-
-    /* 6-AIRPORT CONTINUOUS WATCHDOG SELECTOR */
+    /* 6-AIRPORT SELECTOR */
     .airport-selector {
       display: flex;
       align-items: center;
@@ -496,7 +301,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
 
     .zulu-date { font-size: 8.5px; color: var(--green); font-weight: 700; }
 
-    /* ======================= 3-COLUMN WORKSPACE ======================= */
+    /* 3-COLUMN WORKSPACE */
     .workspace {
       display: grid;
       grid-template-columns: 345px 1fr 415px;
@@ -714,7 +519,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
       display: block;
     }
 
-    /* ======================= CENTER RADAR MAP ======================= */
+    /* CENTER RADAR MAP */
     .map-container {
       position: relative;
       width: 100%;
@@ -806,7 +611,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
       margin-right: 3px;
     }
 
-    /* ======================= RIGHT PANEL: DEEP INSPECTOR ======================= */
+    /* RIGHT PANEL: DEEP INSPECTOR */
     .target-banner {
       background: linear-gradient(90deg, rgba(0,229,255,0.16) 0%, rgba(17,24,38,0.95) 100%);
       border-bottom: 1px solid var(--cyan);
@@ -1032,7 +837,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
     table.traffic-tbl tr.selected-row { background: var(--cyan-dim); color: var(--cyan); }
     table.traffic-tbl tr.danger-row { background: var(--red-dim); color: #fff; font-weight: 800; }
 
-    /* ======================= FLIGHT INSTRUCTOR TOOLTIP HUD ======================= */
+    /* FLIGHT INSTRUCTOR TOOLTIP HUD */
     #instructor-tooltip {
       position: fixed;
       z-index: 9999;
@@ -1074,7 +879,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
       color: var(--cyan);
     }
 
-    /* ======================= MODALS ======================= */
+    /* MODALS */
     .watchdog-modal-backdrop {
       position: fixed;
       inset: 0;
@@ -1211,7 +1016,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
 </div>
 
 <div class="cockpit-shell">
-  <!-- ======================= TOP GLARESHIELD BAR ======================= -->
+  <!-- TOP GLARESHIELD BAR -->
   <header class="top-bar">
     <div class="brand-block">
       <div class="brand-logo">
@@ -1221,7 +1026,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
       </div>
       <div>
         <div class="brand-title">MATH’S <span>APP</span></div>
-        <span class="brand-sub">v8.0 PRO // GITHUB NATIVE 60FPS</span>
+        <span class="brand-sub">v8.1 PRO // LIVE 60FPS RADAR</span>
       </div>
     </div>
 
@@ -1281,10 +1086,10 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
     </div>
   </header>
 
-  <!-- ======================= 3-COLUMN WORKSPACE ======================= -->
+  <!-- 3-COLUMN WORKSPACE -->
   <div class="workspace">
 
-    <!-- ==================== LEFT PANEL: METAR, RUNWAY & LIVE ATC ==================== -->
+    <!-- LEFT PANEL: METAR, RUNWAY & LIVE ATC -->
     <aside class="panel panel-left">
       <div class="panel-section">
         <div class="sec-header">
@@ -1360,7 +1165,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
         </div>
       </div>
 
-      <!-- LIVE VHF ATC RADIO STACK (INSTANT TOWER ⇄ PILOT CONVERSATIONS) -->
+      <!-- LIVE VHF ATC RADIO STACK -->
       <div class="panel-section">
         <div class="sec-header">
           <span>VHF COMM STACK // LIVE ATC CONVERSATIONS</span>
@@ -1399,7 +1204,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
             <button class="btn-avionics" id="btn-live-atc" onclick="toggleLiveATC()">
               <span>▶ LISTEN TOWER ⇄ PILOT</span>
             </button>
-            <button class="btn-avionics" onclick="triggerNextATCExchange()" title="Force immediate radio transmission from current radar sector">
+            <button class="btn-avionics" onclick="triggerNextATCExchange()">
               <span>🎙 NEXT TRANSMISSION</span>
             </button>
           </div>
@@ -1435,10 +1240,9 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
       </div>
     </aside>
 
-    <!-- ==================== CENTER PANEL: 60FPS RADAR DISPLAY ==================== -->
+    <!-- CENTER PANEL: 60FPS RADAR DISPLAY -->
     <main class="map-container" id="map-wrapper">
       <div class="map-hud-top">
-        <!-- Tactical Filter Toolbar -->
         <div class="hud-toolbar">
           <button class="hud-btn active" id="flt-all" onclick="setTrafficFilter('ALL')">ALL</button>
           <button class="hud-btn" id="flt-danger" onclick="setTrafficFilter('DANGER')">🔴 DANGER / SQUAWK (<span id="danger-count-btn">0</span>)</button>
@@ -1447,7 +1251,6 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
           <button class="hud-btn" id="flt-hvy" onclick="setTrafficFilter('HVY')">HEAVY</button>
         </div>
 
-        <!-- Zero-Block Esri Map Switcher -->
         <div class="hud-toolbar">
           <button class="hud-btn active" id="map-dark" onclick="setBasemap('DARK')">DARK RADAR</button>
           <button class="hud-btn" id="map-sat" onclick="setBasemap('SAT')">SATELLITE HD</button>
@@ -1473,7 +1276,7 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
       </div>
     </main>
 
-    <!-- ==================== RIGHT PANEL: TARGET DEEP INSPECTOR ==================== -->
+    <!-- RIGHT PANEL: TARGET DEEP INSPECTOR -->
     <aside class="panel panel-right">
       <div class="target-banner" id="target-top-banner">
         <div>
@@ -1587,10 +1390,10 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
     </aside>
   </div>
 
-  <!-- ======================= COPYRIGHT FOOTER ======================= -->
+  <!-- COPYRIGHT FOOTER -->
   <footer class="footer-bar">
     <div>
-      <strong>© 2026 MATH’S APP v8.0</strong> — TACTICAL AVIONICS SYSTEM. Engineered exclusively for <strong>Mathéo B.</strong> | Architecture & Visuals by <strong>Yoni Brd</strong>.
+      <strong>© 2026 MATH’S APP v8.1</strong> — TACTICAL AVIONICS SYSTEM. Engineered exclusively for <strong>Mathéo B.</strong> | Architecture & Visuals by <strong>Yoni Brd</strong>.
     </div>
     <div>
       PROPRIETARY ALL-RIGHTS-RESERVED LICENSE // HOVER ANY INSTRUMENT FOR PILOT INSTRUCTOR BRIEFING
@@ -1599,9 +1402,6 @@ Copie ce code dans ton fichier `index.html` sur ton dépôt GitHub `meyonime.git
 </div>
 
 <script>
-/* ============================================================================
-   COPYRIGHT & ANTI-CLONE PROTECTION
-============================================================================ */
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('keydown', e => {
   if (
@@ -1613,9 +1413,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-/* ============================================================================
-   1. FLIGHT INSTRUCTOR KNOWLEDGE BASE (ATPL HOVER BRIEFINGS)
-============================================================================ */
 let instructorMode = true;
 
 const PILOT_TOOLTIPS = {
@@ -1774,9 +1571,6 @@ function toggleComplexData() {
   block.style.display = block.style.display === 'none' ? 'block' : 'none';
 }
 
-/* ============================================================================
-   2. 6-AIRPORT DATABASE (ELLX, EBCI, EBLG, EBBR, EGLC, LFPG)
-============================================================================ */
 const AIRPORTS = {
   ELLX: {
     icao: 'ELLX', name: 'LUXEMBOURG', lat: 49.6233, lon: 6.2044, elev: 1234, stdGlide: 3.0, freq: '118.105',
@@ -1824,9 +1618,6 @@ const AIRPORTS = {
   }
 };
 
-/* ============================================================================
-   3. ZERO-BLOCK ESRI DARK RADAR & SATELLITE MAP ENGINE
-============================================================================ */
 let currentAirport = AIRPORTS.ELLX;
 let activeRunway = currentAirport.runways[0];
 
@@ -1837,16 +1628,16 @@ const map = L.map('radar-map', {
   attributionControl: false
 });
 
-const esriDarkBase = L.tileLayer('[https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/](https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/){z}/{y}/{x}', {
+const esriDarkBase = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 16
 }).addTo(map);
 
-const esriDarkLabels = L.tileLayer('[https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/](https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/){z}/{y}/{x}', {
+const esriDarkLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 16,
   opacity: 0.85
 }).addTo(map);
 
-const esriSatLayer = L.tileLayer('[https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/](https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/){z}/{y}/{x}', {
+const esriSatLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   maxZoom: 18
 });
 
@@ -1872,9 +1663,6 @@ const trailLayer = L.layerGroup().addTo(map);
 const aircraftLayer = L.layerGroup().addTo(map);
 let wxRadarLayer = null;
 
-/* ============================================================================
-   4. GEODESIC MATH HELPERS
-============================================================================ */
 function destinationPoint(lat, lon, brngDeg, distNM) {
   const R = 3440.065;
   const d = distNM / R;
@@ -1928,9 +1716,6 @@ function drawRangeRingsAndRunways() {
   }).bindTooltip(`THR RWY ${activeRunway.id}`, { direction: 'top' }).addTo(runwayVectorLayer);
 }
 
-/* ============================================================================
-   5. MULTI-ENGINE ADS-B FETCHER (OPENSKY NATIVE + ADSB.FI + AIRPLANES.LIVE)
-============================================================================ */
 let aircraftMap = new Map();
 let markerRegistry = new Map();
 let dangerAircraftMap = new Map();
@@ -1940,11 +1725,10 @@ let showVectors = true;
 let showWxRadar = false;
 let followTarget = false;
 
-// Engine A: OpenSky Network Native CORS API (Works 100% on GitHub Pages without proxy!)
 async function fetchOpenSkyNative(lat, lon, radiusNM = 75) {
   const degLat = radiusNM / 60;
   const degLon = radiusNM / (60 * Math.cos((lat * Math.PI) / 180));
-  const url = `[https://opensky-network.org/api/states/all?lamin=$](https://opensky-network.org/api/states/all?lamin=$){(lat - degLat).toFixed(2)}&lomin=${(lon - degLon).toFixed(2)}&lamax=${(lat + degLat).toFixed(2)}&lomax=${(lon + degLon).toFixed(2)}`;
+  const url = `https://opensky-network.org/api/states/all?lamin=${(lat - degLat).toFixed(2)}&lomin=${(lon - degLon).toFixed(2)}&lamax=${(lat + degLat).toFixed(2)}&lomax=${(lon + degLon).toFixed(2)}`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error('OpenSky ' + res.status);
@@ -1969,7 +1753,6 @@ async function fetchOpenSkyNative(lat, lon, radiusNM = 75) {
   }));
 }
 
-// Engine B: ADS-B v2 JSON Format (adsb.fi / airplanes.live / adsb.lol)
 async function fetchV2Endpoint(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error('Status ' + res.status);
@@ -1980,9 +1763,9 @@ async function fetchV2Endpoint(url) {
 }
 
 async function fetchSectorADSB(lat, lon, radiusNM = 75) {
-  const uFi = `[https://opendata.adsb.fi/api/v2/lat/$](https://opendata.adsb.fi/api/v2/lat/$){lat}/lon/${lon}/dist/${radiusNM}`;
-  const uLive = `[https://api.airplanes.live/v2/point/$](https://api.airplanes.live/v2/point/$){lat}/${lon}/${radiusNM}`;
-  const uLol = `[https://api.adsb.lol/v2/point/$](https://api.adsb.lol/v2/point/$){lat}/${lon}/${radiusNM}`;
+  const uFi = `https://opendata.adsb.fi/api/v2/lat/${lat}/lon/${lon}/dist/${radiusNM}`;
+  const uLive = `https://api.airplanes.live/v2/point/${lat}/${lon}/${radiusNM}`;
+  const uLol = `https://api.adsb.lol/v2/point/${lat}/${lon}/${radiusNM}`;
 
   try {
     return await Promise.any([
@@ -1990,15 +1773,14 @@ async function fetchSectorADSB(lat, lon, radiusNM = 75) {
       fetchV2Endpoint(uFi),
       fetchV2Endpoint(uLive),
       fetchV2Endpoint(uLol),
-      fetchV2Endpoint(`[https://corsproxy.io/?$](https://corsproxy.io/?$){encodeURIComponent(uLol)}`),
-      fetchV2Endpoint(`[https://api.allorigins.win/raw?url=$](https://api.allorigins.win/raw?url=$){encodeURIComponent(uLol)}`)
+      fetchV2Endpoint(`https://corsproxy.io/?${encodeURIComponent(uLol)}`),
+      fetchV2Endpoint(`https://api.allorigins.win/raw?url=${encodeURIComponent(uLol)}`)
     ]);
   } catch (_) {
     return null;
   }
 }
 
-// Guarantee: If user's ISP/Firewall blocks all external APIs on first load, seed real sector schedules so screen is NEVER empty
 function seedBackupSectorTraffic() {
   if (aircraftMap.size > 0) return;
   const templates = [
@@ -2218,9 +2000,6 @@ function updateEuroDangerBanner() {
   }
 }
 
-/* ============================================================================
-   6. UNINTERRUPTED 60-FPS KINEMATIC MOTION LOOP
-============================================================================ */
 let lastFrameTime = performance.now();
 
 function animate60FPSContinuous() {
@@ -2264,9 +2043,6 @@ function animate60FPSContinuous() {
 }
 requestAnimationFrame(animate60FPSContinuous);
 
-/* ============================================================================
-   7. RADAR MARKERS & DANGER HIGHLIGHTING
-============================================================================ */
 function getAltitudeColor(ac) {
   if (ac.isDanger) return '#ff1744';
   if (ac.isMil) return '#ffab00';
@@ -2354,9 +2130,6 @@ function syncMarkersList() {
   });
 }
 
-/* ============================================================================
-   8. FLIGHT ROUTE ORIGIN ➔ DESTINATION (ADSBDB)
-============================================================================ */
 let activeRouteData = null;
 
 async function fetchFlightOriginDestination(callsign, hex) {
@@ -2369,7 +2142,7 @@ async function fetchFlightOriginDestination(callsign, hex) {
 
   const cleanCs = callsign.replace(/[^A-Z0-9]/gi, '');
   try {
-    const res = await fetch(`[https://api.adsbdb.com/v0/callsign/$](https://api.adsbdb.com/v0/callsign/$){cleanCs}`);
+    const res = await fetch(`https://api.adsbdb.com/v0/callsign/${cleanCs}`);
     if (res.ok) {
       const json = await res.json();
       if (json && json.response && json.response.flightroute) {
@@ -2462,9 +2235,6 @@ function renderFlightRouteProgress() {
   }
 }
 
-/* ============================================================================
-   9. CONTINUOUS 6-AIRPORT WATCHDOG & BELUX/FR/UK DANGER MODAL
-============================================================================ */
 const watchdogStatus = {};
 const WATCHED_ICAOS = ['ELLX', 'EBCI', 'EBLG', 'EBBR', 'EGLC', 'LFPG'];
 
@@ -2475,7 +2245,7 @@ async function runContinuousAirportWatchdog() {
   for (const icao of WATCHED_ICAOS) {
     const apt = AIRPORTS[icao];
     try {
-      const omUrl = `[https://api.open-meteo.com/v1/forecast?latitude=$](https://api.open-meteo.com/v1/forecast?latitude=$){apt.lat}&longitude=${apt.lon}&current=temperature_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn`;
+      const omUrl = `https://api.open-meteo.com/v1/forecast?latitude=${apt.lat}&longitude=${apt.lon}&current=temperature_2m,dew_point_2m,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&wind_speed_unit=kn`;
       const res = await fetch(omUrl);
       const data = await res.json();
       const c = data.current;
@@ -2491,6 +2261,7 @@ async function runContinuousAirportWatchdog() {
       const rwy = apt.runways[0];
       const diffRad = ((wdir - rwy.hdg) * Math.PI) / 180;
       const xwind = Math.abs(wspd * Math.sin(diffRad));
+      const gustXwind = Math.abs(wgst * Math.sin(diffRad));
       const spread = Math.max(0, temp - dew);
       const cloudBase = Math.round(spread * 400);
 
@@ -2501,9 +2272,9 @@ async function runContinuousAirportWatchdog() {
         severity = 'CRIT';
         issues.push(`SEVERE SURFACE GALE / GUSTS: ${wdir}° AT ${wspd}G${wgst} KT`);
       }
-      if (xwind >= 15) {
+      if (xwind >= 15 || gustXwind >= 15) {
         severity = 'CRIT';
-        issues.push(`CROSSWIND EXCEEDS 15KT LIMIT ON RWY ${rwy.id} (${xwind.toFixed(1)} KT)`);
+        issues.push(`CROSSWIND / GUST EXCEEDS 15KT LIMIT ON RWY ${rwy.id} (MAX ${gustXwind.toFixed(1)} KT)`);
       } else if (xwind >= 11) {
         if (severity === 'NOMINAL') severity = 'WARN';
         issues.push(`MODERATE CROSSWIND ON RWY ${rwy.id} (${xwind.toFixed(1)} KT)`);
@@ -2511,6 +2282,10 @@ async function runContinuousAirportWatchdog() {
       if (cloudBase < 1000 || spread <= 1) {
         severity = 'CRIT';
         issues.push(`LOW CEILING / FOG RISK (SPREAD ${spread}°C, BASE ~${cloudBase} FT - IFR)`);
+      }
+      if (qnh < 990) {
+        severity = 'CRIT';
+        issues.push(`DEEP LOW PRESSURE SYSTEM (QNH ${qnh} hPa — CHECK ALTIMETER SUBSCALE)`);
       }
       if (wcode >= 95) {
         severity = 'CRIT';
@@ -2633,6 +2408,7 @@ function closeWatchdogModal() {
 }
 
 function simulateEmergencyDrill() {
+  if (aircraftMap.size === 0) seedBackupSectorTraffic();
   const firstAc = Array.from(aircraftMap.values())[0];
   if (!firstAc) return;
   firstAc.squawk = '7700';
@@ -2650,9 +2426,6 @@ function simulateEmergencyDrill() {
   map.setView([firstAc.currLat, firstAc.currLon], 10);
 }
 
-/* ============================================================================
-   10. TARGET INSPECTOR, PFD & WEATHER RENDERERS
-============================================================================ */
 let currentWeather = {
   windDir: 240, windSpd: 10, windGust: 12, qnh: 1015, temp: 14, dew: 8, vis: 9999, cloudBase: 3500, cat: 'VFR', rawMetar: ''
 };
@@ -2713,7 +2486,7 @@ function updateCrosswindCalculator() {
   document.getElementById('xw-elev').textContent = `${currentAirport.elev} FT / ${currentAirport.stdGlide.toFixed(1)}°`;
 
   const stEl = document.getElementById('xw-status');
-  if (Math.abs(crosswind) > 15 || headwind < -5) {
+  if (Math.abs(crosswind) > 15 || maxGustCross > 15 || headwind < -5) {
     stEl.textContent = 'EXCEEDS 15KT LIMIT';
     stEl.style.color = 'var(--red)';
   } else {
@@ -2873,7 +2646,7 @@ async function fetchAircraftPhoto(hex, reg) {
   const box = document.getElementById('photo-container');
   box.innerHTML = `<span style="color:var(--cyan);font-size:9.5px">LOADING AIRFRAME PHOTO (${hex})...</span>`;
   try {
-    const res = await fetch(`[https://api.planespotters.net/pub/photos/hex/$](https://api.planespotters.net/pub/photos/hex/$){hex.toLowerCase()}`);
+    const res = await fetch(`https://api.planespotters.net/pub/photos/hex/${hex.toLowerCase()}`);
     const data = await res.json();
     if (data && data.photos && data.photos.length > 0) {
       const p = data.photos[0];
@@ -2906,9 +2679,6 @@ function renderTrafficTable() {
   `).join('');
 }
 
-/* ============================================================================
-   11. INSTANT DUAL-VOICE TOWER ⇄ PILOT ATC CONVERSATION ENGINE (ZERO SILENCE!)
-============================================================================ */
 let isLiveATCActive = false;
 let atcTimer = null;
 
@@ -2962,7 +2732,6 @@ function toggleLiveATC() {
   badge.textContent = 'VHF RX ACTIVE';
   badge.style.color = 'var(--green)';
 
-  // Starts Tower <-> Pilot conversation immediately without waiting on hung streams!
   runTwoVoiceTowerPilotDialogue();
   atcTimer = setInterval(() => {
     if (isLiveATCActive) runTwoVoiceTowerPilotDialogue();
@@ -3066,9 +2835,6 @@ function animateOscilloscope() {
 }
 animateOscilloscope();
 
-/* ============================================================================
-   12. AIRPORT SELECTION, DUAL ZULU/BELUX CLOCK & INITIAL BOOT
-============================================================================ */
 function selectAirport(icao) {
   if (!AIRPORTS[icao]) return;
   currentAirport = AIRPORTS[icao];
@@ -3121,10 +2887,10 @@ async function toggleMapLayer(layer) {
     document.getElementById('lyr-wxradar').classList.toggle('active', showWxRadar);
     if (showWxRadar) {
       try {
-        const res = await fetch('[https://api.rainviewer.com/public/weather-maps.json](https://api.rainviewer.com/public/weather-maps.json)');
+        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
         const wxData = await res.json();
         const latestPath = wxData.radar.past[wxData.radar.past.length - 1].path;
-        wxRadarLayer = L.tileLayer(`[https://tilecache.rainviewer.com](https://tilecache.rainviewer.com)${latestPath}/256/{z}/{x}/{y}/2/1_1.png`, { opacity: 0.55 }).addTo(map);
+        wxRadarLayer = L.tileLayer(`https://tilecache.rainviewer.com${latestPath}/256/{z}/{x}/{y}/2/1_1.png`, { opacity: 0.55 }).addTo(map);
       } catch (_) {}
     } else if (wxRadarLayer) {
       map.removeLayer(wxRadarLayer);
@@ -3147,7 +2913,6 @@ function updateZuluClock() {
 setInterval(updateZuluClock, 1000);
 updateZuluClock();
 
-// INITIAL BOOT ON ELLX LUXEMBOURG
 selectAirport('ELLX');
 setInterval(fetchLiveTraffic, 3500);
 setInterval(runContinuousAirportWatchdog, 45000);

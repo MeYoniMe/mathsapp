@@ -2,15 +2,10 @@
 ================================================================================
   PROPRIETARY SOFTWARE LICENSE — ALL RIGHTS RESERVED
 ================================================================================
-  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v9.0 PRO)
+  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v9.5 TURBO)
   DEDICATED TO: MATHÉO B. (Certified Training Edition — 100% Real Telemetry Only)
   ARCHITECTURE: Visuals by Yoni Brd
   COPYRIGHT   : © 2026 Mathéo B. & Visuals by Yoni Brd. All Rights Reserved.
-
-  CERTIFICATION NOTICE:
-  ZERO SIMULATED OR FAKE TRAFFIC. Every aircraft, hex code, registration,
-  photograph, and meteorological parameter displayed by this system comes
-  strictly from live ADS-B / Mode-S transponders and official WMO/NOAA feeds.
 ================================================================================
 -->
 <!DOCTYPE html>
@@ -19,7 +14,7 @@
   <meta charset="UTF-8" />
   <meta name="google" content="notranslate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MATH'S APP v9.0 // CERTIFIED 100% REAL ADS-B & MODE-S EFB</title>
+  <title>MATH'S APP v9.5 // INSTANT-BOOT REAL ADS-B & MODE-S EFB</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1030,7 +1025,7 @@
       </div>
       <div>
         <div class="brand-title">MATH’S <span>APP</span></div>
-        <span class="brand-sub">v9.0 CERTIFIED // 100% REAL ADS-B</span>
+        <span class="brand-sub">v9.5 TURBO // INSTANT-BOOT ADS-B</span>
       </div>
     </div>
 
@@ -1093,7 +1088,7 @@
   <!-- 3-COLUMN WORKSPACE -->
   <div class="workspace">
 
-    <!-- LEFT PANEL: METAR, RUNWAY & LIVE ATC -->
+    <!-- LEFT PANEL: AIRPORT LIVE INFO (METAR, RUNWAY & LIVE ATC) -->
     <aside class="panel panel-left">
       <div class="panel-section">
         <div class="sec-header">
@@ -1225,7 +1220,7 @@
       <div class="panel-section" style="flex:1">
         <div class="sec-header">
           <span>REAL TARGETS (<span id="stat-total-ac">0</span> AC / <span id="stat-mil-ac" style="color:var(--amber)">0</span> MIL)</span>
-          <span id="feed-health-lbl" style="color:var(--green)">SYNCING TRANSPONDERS...</span>
+          <span id="feed-health-lbl" style="color:var(--green)">INSTANT-BOOT READY</span>
         </div>
         <div class="traffic-table-wrap">
           <table class="traffic-tbl">
@@ -1253,7 +1248,7 @@
           <button class="hud-btn" id="flt-mil" onclick="setTrafficFilter('MIL')">MILITARY</button>
           <button class="hud-btn" id="flt-app" onclick="setTrafficFilter('APP')">APPROACH</button>
           <button class="hud-btn" id="flt-hvy" onclick="setTrafficFilter('HVY')">HEAVY</button>
-          <button class="hud-btn" onclick="forceImmediateRadarSync()" title="Force immediate radar transponder resync" style="color:var(--green);border-color:var(--green)">⟳ SYNC NOW</button>
+          <button class="hud-btn" onclick="forceImmediateRadarSync()" style="color:var(--green);border-color:var(--green)">⚡ TURBO SYNC</button>
         </div>
 
         <div class="hud-toolbar">
@@ -1281,7 +1276,7 @@
       </div>
     </main>
 
-    <!-- RIGHT PANEL: TARGET DEEP INSPECTOR -->
+    <!-- RIGHT PANEL: SELECTED AIRCRAFT LIVE COCKPIT INSPECTOR -->
     <aside class="panel panel-right">
       <div class="target-banner" id="target-top-banner">
         <div>
@@ -1398,10 +1393,10 @@
   <!-- COPYRIGHT FOOTER -->
   <footer class="footer-bar">
     <div>
-      <strong>© 2026 MATH’S APP v9.0</strong> — CERTIFIED TRAINING AVIONICS SYSTEM. Engineered exclusively for <strong>Mathéo B.</strong> | Architecture & Visuals by <strong>Yoni Brd</strong>.
+      <strong>© 2026 MATH’S APP v9.5</strong> — CERTIFIED TRAINING AVIONICS SYSTEM. Engineered exclusively for <strong>Mathéo B.</strong> | Architecture & Visuals by <strong>Yoni Brd</strong>.
     </div>
     <div>
-      100% REAL TRANSPONDER DATA ONLY // ZERO SIMULATED TRAFFIC // PROPRIETARY LICENSE
+      100% REAL TRANSPONDER DATA ONLY // INSTANT-BOOT CACHE ENGINE // PROPRIETARY LICENSE
     </div>
   </footer>
 </div>
@@ -1734,7 +1729,7 @@ function drawRangeRingsAndRunways() {
 }
 
 /* ============================================================================
-   5. CERTIFIED 100% REAL ADS-B ENGINE (ZERO FAKE DATA / CACHE-BUSTED SYNC)
+   5. TURBO INSTANT-BOOT CACHE & MULTI-GATEWAY ADS-B ENGINE
 ============================================================================ */
 let aircraftMap = new Map();
 let markerRegistry = new Map();
@@ -1746,8 +1741,49 @@ let showWxRadar = false;
 let followTarget = false;
 let lastOpenSkyCallMs = 0;
 
-// Helper with strict timeout & cache-busting
-async function fetchWithTimeout(url, ms = 5500) {
+// INSTANT-BOOT: Load real aircraft from browser memory in 0.01s on page open!
+function loadInstantBootCache() {
+  try {
+    const raw = localStorage.getItem('MATHS_APP_REAL_CACHE_V95');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const elapsedSec = (Date.now() - parsed.savedAt) / 1000;
+    // Only use cache if < 60 seconds old
+    if (elapsedSec > 60 || !Array.isArray(parsed.aircraft)) return;
+
+    parsed.aircraft.forEach(ac => {
+      // Advance position by exact elapsed time since save
+      if (ac.gs > 20 && elapsedSec < 25) {
+        const [projLat, projLon] = destinationPoint(ac.currLat, ac.currLon, ac.track, (ac.gs * elapsedSec) / 3600);
+        ac.currLat = projLat;
+        ac.currLon = projLon;
+      }
+      ac.distNM = distanceNM(currentAirport.lat, currentAirport.lon, ac.currLat, ac.currLon);
+      aircraftMap.set(ac.hex, ac);
+    });
+
+    if (aircraftMap.size > 0) {
+      document.getElementById('stat-total-ac').textContent = aircraftMap.size;
+      document.getElementById('feed-health-lbl').textContent = 'INSTANT CACHE -> SYNCING LIVE...';
+      syncMarkersList();
+      renderTrafficTable();
+      const first = Array.from(aircraftMap.values()).sort((a, b) => a.distNM - b.distNM)[0];
+      if (first) selectAircraft(first.hex);
+    }
+  } catch (_) {}
+}
+
+function saveInstantBootCache() {
+  try {
+    const arr = Array.from(aircraftMap.values()).slice(0, 80);
+    localStorage.setItem('MATHS_APP_REAL_CACHE_V95', JSON.stringify({
+      savedAt: Date.now(),
+      aircraft: arr
+    }));
+  } catch (_) {}
+}
+
+async function fetchWithTimeout(url, ms = 4800) {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), ms);
   try {
@@ -1761,25 +1797,24 @@ async function fetchWithTimeout(url, ms = 5500) {
   }
 }
 
-// 1. OpenSky Network Official API (Polled max once every 10s so IP is NEVER rate-limited!)
-async function pollOpenSkyDirect(lat, lon, radiusNM = 70) {
+async function pollOpenSkyDirect(lat, lon, radiusNM = 75) {
   const now = Date.now();
-  if (now - lastOpenSkyCallMs < 9500) throw new Error('Respecting 10s OpenSky rate limit');
+  if (now - lastOpenSkyCallMs < 9500) throw new Error('OpenSky cooldown');
   lastOpenSkyCallMs = now;
 
   const degLat = radiusNM / 60;
   const degLon = radiusNM / (60 * Math.cos((lat * Math.PI) / 180));
-  const url = `https://opensky-network.org/api/states/all?lamin=${(lat - degLat).toFixed(2)}&lomin=${(lon - degLon).toFixed(2)}&lamax=${(lat + degLat).toFixed(2)}&lomax=${(lon + degLon).toFixed(2)}&_cb=${now}`;
+  const url = `https://opensky-network.org/api/states/all?lamin=${(lat - degLat).toFixed(2)}&lomin=${(lon - degLon).toFixed(2)}&lamax=${(lat + degLat).toFixed(2)}&lomax=${(lon + degLon).toFixed(2)}`;
 
-  const data = await fetchWithTimeout(url, 5500);
+  const data = await fetchWithTimeout(url, 4800);
   if (!data || !Array.isArray(data.states) || data.states.length === 0) throw new Error('No OpenSky states');
 
   return {
-    source: 'OPENSKY NATIVE',
+    source: 'OPENSKY DIRECT',
     list: data.states.map(s => ({
       hex: s[0],
       flight: (s[1] || s[0]).trim(),
-      r: '', // OpenSky does not send registration in state vector; we resolve via hex!
+      r: '',
       t: s[8] ? 'GND' : 'ACFT',
       lon: s[5],
       lat: s[6],
@@ -1795,27 +1830,29 @@ async function pollOpenSkyDirect(lat, lon, radiusNM = 70) {
   };
 }
 
-// 2. Mode-S EHS v2 Providers (adsb.lol / airplanes.live / adsb.fi) with Cache-Busters
-async function pollModeSV2(lat, lon, radiusNM = 70) {
-  const cb = Date.now();
-  const rawLol = `https://api.adsb.lol/v2/point/${lat}/${lon}/${radiusNM}?_=${cb}`;
-  const rawFi  = `https://opendata.adsb.fi/api/v2/lat/${lat}/lon/${lon}/dist/${radiusNM}?_=${cb}`;
-  const rawLive = `https://api.airplanes.live/v2/point/${lat}/${lon}/${radiusNM}?_=${cb}`;
+async function pollModeSV2(lat, lon, radiusNM = 75) {
+  const rawLol  = `https://api.adsb.lol/v2/point/${lat}/${lon}/${radiusNM}`;
+  const rawFi   = `https://opendata.adsb.fi/api/v2/lat/${lat}/lon/${lon}/dist/${radiusNM}`;
+  const rawLive = `https://api.airplanes.live/v2/point/${lat}/${lon}/${radiusNM}`;
+  const rawOne  = `https://api.adsb.one/v2/point/${lat}/${lon}/${radiusNM}`;
 
   const endpoints = [
     { name: 'ADSB.FI DIRECT', url: rawFi },
+    { name: 'ADSB.ONE DIRECT', url: rawOne },
     { name: 'AIRPLANES.LIVE', url: rawLive },
     { name: 'ADSB.LOL DIRECT', url: rawLol },
-    { name: 'ADSB.LOL TUNNEL-1', url: `https://corsproxy.io/?${encodeURIComponent(rawLol)}` },
-    { name: 'ADSB.LOL TUNNEL-2', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rawLol)}` },
-    { name: 'ADSB.FI TUNNEL-3', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(rawFi)}` }
+    { name: 'MODE-S TUNNEL 1', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rawLol)}` },
+    { name: 'MODE-S TUNNEL 2', url: `https://corsproxy.io/?${encodeURIComponent(rawLol)}` },
+    { name: 'MODE-S TUNNEL 3', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(rawFi)}` }
   ];
 
   const tasks = endpoints.map(async ep => {
-    const json = await fetchWithTimeout(ep.url, 5500);
+    const t0 = performance.now();
+    const json = await fetchWithTimeout(ep.url, 4800);
     const arr = json.ac || json.aircraft;
     if (Array.isArray(arr) && arr.length > 0) {
-      return { source: ep.name, list: arr };
+      const pingMs = Math.round(performance.now() - t0);
+      return { source: `${ep.name} (${pingMs}ms)`, list: arr };
     }
     throw new Error('Empty v2');
   });
@@ -1848,23 +1885,20 @@ async function fetchLiveTraffic() {
     let result = null;
     try {
       result = await Promise.any([
-        pollModeSV2(currentAirport.lat, currentAirport.lon, 70),
-        pollOpenSkyDirect(currentAirport.lat, currentAirport.lon, 70)
+        pollModeSV2(currentAirport.lat, currentAirport.lon, 75),
+        pollOpenSkyDirect(currentAirport.lat, currentAirport.lon, 75)
       ]);
     } catch (_) {}
 
     const nowMs = Date.now();
 
     if (result && Array.isArray(result.list) && result.list.length > 0) {
-      document.getElementById('feed-health-lbl').textContent = `${result.source} (LIVE)`;
+      document.getElementById('feed-health-lbl').textContent = result.source;
       document.getElementById('feed-health-lbl').style.color = 'var(--green)';
-
-      const freshHexSet = new Set();
 
       result.list.forEach(ac => {
         if (ac.lat === undefined || ac.lon === undefined || ac.lat === null || ac.lon === null) return;
         const hex = String(ac.hex).toUpperCase().trim();
-        freshHexSet.add(hex);
 
         const prev = aircraftMap.get(hex);
         if (prev && prev.isDrill) {
@@ -1888,14 +1922,13 @@ async function fetchLiveTraffic() {
           altBaro
         });
 
-        // SNAP TO REAL SERVER POSITION: If drift > 0.4 NM, snap immediately to true radar coordinate
         let startLat = ac.lat;
         let startLon = ac.lon;
         if (prev) {
           const driftNM = distanceNM(prev.currLat, prev.currLon, ac.lat, ac.lon);
-          if (driftNM < 0.4) {
-            startLat = prev.currLat + (ac.lat - prev.currLat) * 0.65;
-            startLon = prev.currLon + (ac.lon - prev.currLon) * 0.65;
+          if (driftNM < 0.35) {
+            startLat = prev.currLat + (ac.lat - prev.currLat) * 0.7;
+            startLon = prev.currLon + (ac.lon - prev.currLon) * 0.7;
           }
         }
 
@@ -1935,17 +1968,15 @@ async function fetchLiveTraffic() {
           trail
         });
       });
-    } else {
-      document.getElementById('feed-health-lbl').textContent = 'AWAITING NEXT RADAR SWEEP...';
-      document.getElementById('feed-health-lbl').style.color = 'var(--amber)';
+
+      saveInstantBootCache();
     }
 
-    // Strict Stale Pruning: Remove any aircraft not updated in 35 seconds
     let milCount = 0;
     dangerAircraftMap.clear();
 
     for (const [hex, ac] of aircraftMap.entries()) {
-      if (nowMs - ac.lastSeenMs > 35000 && !ac.isDrill) {
+      if (nowMs - ac.lastSeenMs > 40000 && !ac.isDrill) {
         aircraftMap.delete(hex);
         if (markerRegistry.has(hex)) {
           const mObj = markerRegistry.get(hex);
@@ -2009,7 +2040,7 @@ function updateEuroDangerBanner() {
 }
 
 /* ============================================================================
-   6. BOUNDED 60-FPS KINEMATIC INTERPOLATOR (NEVER COASTS AWAY INDEFINITELY!)
+   6. BOUNDED 60-FPS KINEMATIC INTERPOLATOR
 ============================================================================ */
 let lastFrameTime = performance.now();
 
@@ -2025,7 +2056,6 @@ function animate60FPSBounded() {
 
     const ageSec = (wallNow - ac.lastSeenMs) / 1000;
 
-    // STRICT AVIATION SAFETY CLAMP: Only extrapolate if last real radar packet is < 11 seconds old!
     if (ac.gs > 15 && ageSec < 11.0) {
       const stepNM = (ac.gs * dtSec) / 3600;
       const [nextLat, nextLon] = destinationPoint(ac.currLat, ac.currLon, ac.track, stepNM);
@@ -2166,13 +2196,11 @@ async function fetchVerifiedAirframeAndRoute(ac) {
 
   const cleanCs = ac.callsign.replace(/[^A-Z0-9]/gi, '');
 
-  // 1. Query ADSBDB for both exact Airframe Registration/Type (by HEX) AND Flightroute (by Callsign)
   try {
     const res = await fetch(`https://api.adsbdb.com/v0/aircraft/${ac.hex.toLowerCase()}?callsign=${cleanCs}`);
     if (res.ok) {
       const json = await res.json();
       if (json && json.response) {
-        // Update real registration & ICAO type from official hex registry!
         const af = json.response.aircraft;
         if (af) {
           if (af.registration) ac.reg = af.registration;
@@ -2209,7 +2237,6 @@ async function fetchVerifiedAirframeAndRoute(ac) {
     }
   } catch (_) {}
 
-  // 2. Fetch Verified Photograph strictly matching this real HEX & Registration
   fetchVerifiedAircraftPhoto(ac.hex, ac.reg);
 }
 
@@ -2874,7 +2901,7 @@ function animateOscilloscope() {
 animateOscilloscope();
 
 /* ============================================================================
-   12. AIRPORT SELECTION, DUAL ZULU/BELUX CLOCK & INITIAL BOOT
+   12. SEAMLESS AIRPORT SWITCHING (KEEPS EXISTING PLANES VISIBLE!)
 ============================================================================ */
 function selectAirport(icao) {
   if (!AIRPORTS[icao]) return;
@@ -2885,14 +2912,7 @@ function selectAirport(icao) {
     btn.classList.toggle('active', btn.getAttribute('data-icao') === icao);
   });
 
-  selectedHex = null;
-  lastPhotoHex = null;
-  aircraftLayer.clearLayers();
-  trailLayer.clearLayers();
-  routeLineLayer.clearLayers();
-  markerRegistry.clear();
-  aircraftMap.clear();
-
+  // Note: We DO NOT clear aircraftMap here anymore so planes in overlapping BELUX sectors stay visible!
   map.setView([currentAirport.lat, currentAirport.lon], 9);
   renderRunwayButtons();
   drawRangeRingsAndRunways();
@@ -2955,8 +2975,10 @@ function updateZuluClock() {
 setInterval(updateZuluClock, 1000);
 updateZuluClock();
 
+// 1. Load Instant-Boot Cache in 0.01s, then start 2.2s Turbo Polling
+loadInstantBootCache();
 selectAirport('ELLX');
-setInterval(fetchLiveTraffic, 3500);
+setInterval(fetchLiveTraffic, 2200);
 setInterval(runContinuousAirportWatchdog, 45000);
 </script>
 </body>

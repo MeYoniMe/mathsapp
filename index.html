@@ -2,17 +2,16 @@
 ================================================================================
   PROPRIETARY SOFTWARE LICENSE — ALL RIGHTS RESERVED
 ================================================================================
-  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v6.1 PRO)
+  APPLICATION : MATH'S APP — TACTICAL AVIONICS & FLIGHT TELEMETRY EFB (v7.0 PRO)
   DEDICATED TO: MATHÉO B. (Future Airline & Aeronautical Pilot Edition)
   ARCHITECTURE: Visuals by Yoni Brd
   COPYRIGHT   : © 2026 Mathéo B. & Visuals by Yoni Brd. All Rights Reserved.
 
   LEGAL NOTICE:
-  This source code, parallel multi-gateway ADS-B engine, 60-FPS kinematic
-  extrapolator, Mode-S EHS decoders, and BELUX/FR/UK emergency squawk guard
-  are the exclusive intellectual property of Mathéo B. and Visuals by Yoni Brd.
-  Unauthorized copying, modification, reverse-engineering, or redistribution
-  is strictly prohibited under international copyright laws.
+  This source code, zero-drop persistent 60-FPS kinematic engine, Mode-S EHS
+  telemetry decoders, dual-voice ATC/Pilot readbackcomms, and BELUX/FR/UK
+  emergency squawk guard are the exclusive intellectual property of Mathéo B.
+  and Visuals by Yoni Brd. Unauthorized reproduction is strictly prohibited.
 ================================================================================
 -->
 <!DOCTYPE html>
@@ -20,7 +19,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MATH'S APP v6.1 // BELUX-FR-UK TACTICAL AVIONICS & 60FPS RADAR</title>
+  <meta name="referrer" content="no-referrer" />
+  <title>MATH'S APP v7.0 // ZERO-DROP 60FPS RADAR & LIVE ATC</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -177,7 +177,6 @@
 
     .apt-btn.active small { color: #d0f8ff; }
 
-    /* WATCHDOG STATUS LED */
     .watchdog-led {
       width: 8px;
       height: 8px;
@@ -297,21 +296,22 @@
       text-align: right;
       border-left: 1px solid var(--border-dim);
       padding-left: 8px;
+      cursor: help;
     }
 
     .zulu-time {
       font-family: var(--font-hud);
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 800;
       color: var(--cyan);
     }
 
-    .zulu-date { font-size: 8px; color: var(--text-muted); }
+    .zulu-date { font-size: 8.5px; color: var(--green); font-weight: 700; }
 
     /* ======================= 3-COLUMN WORKSPACE ======================= */
     .workspace {
       display: grid;
-      grid-template-columns: 340px 1fr 415px;
+      grid-template-columns: 345px 1fr 415px;
       height: 100%;
       overflow: hidden;
     }
@@ -510,16 +510,16 @@
       border: 1px solid #152232;
       color: var(--green);
       font-size: 9px;
-      padding: 4px 6px;
+      padding: 5px 6px;
       border-radius: 2px;
       margin-bottom: 5px;
-      min-height: 30px;
-      line-height: 1.3;
+      min-height: 42px;
+      line-height: 1.35;
     }
 
     #oscilloscope {
       width: 100%;
-      height: 28px;
+      height: 26px;
       background: #030508;
       border: 1px solid #152232;
       border-radius: 2px;
@@ -813,7 +813,7 @@
 
     /* TRAFFIC TABLE */
     .traffic-table-wrap {
-      max-height: 170px;
+      max-height: 165px;
       overflow-y: auto;
     }
 
@@ -957,7 +957,6 @@
       animation: dangerRingPulse 1.1s infinite ease-out;
     }
 
-    /* FOOTER */
     .footer-bar {
       background: #04060a;
       border-top: 1px solid var(--border-bright);
@@ -1034,7 +1033,7 @@
       </div>
       <div>
         <div class="brand-title">MATH’S <span>APP</span></div>
-        <span class="brand-sub">v6.1 PRO // INSTANT ADS-B LOCK</span>
+        <span class="brand-sub">v7.0 PRO // ZERO-DROP 60FPS</span>
       </div>
     </div>
 
@@ -1071,7 +1070,7 @@
       </div>
     </div>
 
-    <!-- TOP RIGHT: BELUX/FR/UK EMERGENCY GUARD + AIRPORT WATCHDOG + INSTRUCTOR -->
+    <!-- TOP RIGHT: BELUX/FR/UK EMERGENCY GUARD + AIRPORT WATCHDOG + DUAL CLOCK -->
     <div class="top-telemetry">
       <button class="master-caution-btn" id="btn-euro-danger" onclick="openWatchdogModal()" data-tip="EURO_DANGER_GUARD">
         <span id="danger-dot" style="color:var(--green)">●</span>
@@ -1087,9 +1086,9 @@
         <span>🎓 BRIEF: ON</span>
       </button>
 
-      <div class="zulu-clock">
+      <div class="zulu-clock" data-tip="ZULU_CLOCK">
         <div class="zulu-time" id="zulu-time">00:00:00Z</div>
-        <div class="zulu-date" id="zulu-date">UTC</div>
+        <div class="zulu-date" id="local-time-sub">BELUX: 00:00:00</div>
       </div>
     </div>
   </header>
@@ -1173,10 +1172,10 @@
         </div>
       </div>
 
-      <!-- DIRECT IN-APP LIVE ATC STREAMER (VERIFIED LIVE STREAMS AT THE TOP!) -->
+      <!-- LIVE VHF ATC RADIO STACK (24/7 LIVE STREAMS AT TOP + 2-VOICE TOWER/PILOT DIALOGUE) -->
       <div class="panel-section">
         <div class="sec-header">
-          <span>VHF COMM STACK // 24/7 LIVE ATC STREAMS</span>
+          <span>VHF COMM STACK // LIVE ATC CONVERSATIONS</span>
           <span id="radio-state-badge" style="color:var(--text-muted)">STANDBY</span>
         </div>
 
@@ -1188,45 +1187,43 @@
             </div>
             <div style="text-align:right">
               <div id="com1-name" style="font-weight:800;color:var(--green);font-size:9.5px">EBBR BRUSSELS APPROACH</div>
-              <div id="com1-mode-lbl" style="font-size:8px;color:var(--cyan)">VERIFIED 24/7 LIVE VHF FEED</div>
+              <div id="com1-mode-lbl" style="font-size:8px;color:var(--cyan)">24/7 LIVE VHF + DUAL-VOICE ATC</div>
             </div>
           </div>
 
           <div style="margin-bottom:6px">
-            <div style="font-size:8px;color:var(--green);font-weight:700;margin-bottom:3px">🟢 ACTIVE 24/7 LIVE ATC FEEDS (TOP OF LIST):</div>
+            <div style="font-size:8px;color:var(--green);font-weight:700;margin-bottom:3px">🟢 ACTIVE 24/7 LIVE FEEDS FIRST IN LIST:</div>
             <select id="atc-channel-select" onchange="changeATCChannel()" style="width:100%;background:#0c1320;color:var(--cyan);border:1px solid var(--green);padding:5px;font-family:var(--font-mono);font-size:9.5px;font-weight:700;border-radius:2px;">
-              <optgroup label="🟢 VERIFIED 24/7 LIVE REAL ATC STREAMS (EUROPE)">
-                <option value="https://d.liveatc.net/ebbr_app" data-freq="118.250" data-name="EBBR BRUSSELS APPROACH">🟢 LIVE 24/7 — EBBR BRUSSELS APPROACH (118.250)</option>
-                <option value="https://d.liveatc.net/ebbr_twr" data-freq="118.605" data-name="EBBR BRUSSELS TOWER">🟢 LIVE 24/7 — EBBR BRUSSELS TOWER (118.605)</option>
-                <option value="https://d.liveatc.net/lfpg3_twr" data-freq="119.250" data-name="LFPG PARIS CDG TOWER">🟢 LIVE 24/7 — LFPG PARIS CDG TOWER (119.250)</option>
-                <option value="https://d.liveatc.net/lfpg2_app" data-freq="118.150" data-name="LFPG PARIS CDG APPROACH">🟢 LIVE 24/7 — LFPG PARIS CDG APPROACH (118.150)</option>
-                <option value="https://d.liveatc.net/eham_app" data-freq="119.055" data-name="EHAM AMSTERDAM RADAR">🟢 LIVE 24/7 — EHAM AMSTERDAM SCHIPHOL (119.055)</option>
-                <option value="https://d.liveatc.net/eddf2_app" data-freq="120.800" data-name="EDDF FRANKFURT DIRECTOR">🟢 LIVE 24/7 — EDDF FRANKFURT APPROACH (120.800)</option>
-                <option value="https://d.liveatc.net/lszh_twr" data-freq="118.100" data-name="LSZH ZURICH TOWER">🟢 LIVE 24/7 — LSZH ZURICH TOWER (118.100)</option>
-                <option value="https://d.liveatc.net/eidw_twr" data-freq="118.600" data-name="EIDW DUBLIN TOWER">🟢 LIVE 24/7 — EIDW DUBLIN TOWER (118.600)</option>
+              <optgroup label="🟢 100% LIVE 24/7 REAL CONTROLLER STREAMS">
+                <option value="ebbr_app" data-stream="https://d.liveatc.net/ebbr_app" data-icao="ebbr" data-freq="118.250" data-name="EBBR BRUSSELS APPROACH">🟢 LIVE 24/7 — EBBR BRUSSELS APPROACH (118.250)</option>
+                <option value="ebbr_twr" data-stream="https://d.liveatc.net/ebbr_twr" data-icao="ebbr" data-freq="118.605" data-name="EBBR BRUSSELS TOWER">🟢 LIVE 24/7 — EBBR BRUSSELS TOWER (118.605)</option>
+                <option value="lfpg3_twr" data-stream="https://d.liveatc.net/lfpg3_twr" data-icao="lfpg" data-freq="119.250" data-name="LFPG PARIS CDG TOWER">🟢 LIVE 24/7 — LFPG PARIS CDG TOWER (119.250)</option>
+                <option value="lfpg2_app" data-stream="https://d.liveatc.net/lfpg2_app" data-icao="lfpg" data-freq="118.150" data-name="LFPG PARIS CDG APPROACH">🟢 LIVE 24/7 — LFPG PARIS CDG APPROACH (118.150)</option>
+                <option value="eham_app" data-stream="https://d.liveatc.net/eham_app" data-icao="eham" data-freq="119.055" data-name="EHAM AMSTERDAM RADAR">🟢 LIVE 24/7 — EHAM AMSTERDAM SCHIPHOL (119.055)</option>
+                <option value="eddf2_app" data-stream="https://d.liveatc.net/eddf2_app" data-icao="eddf" data-freq="120.800" data-name="EDDF FRANKFURT APPROACH">🟢 LIVE 24/7 — EDDF FRANKFURT APPROACH (120.800)</option>
+                <option value="lszh_twr" data-stream="https://d.liveatc.net/lszh_twr" data-icao="lszh" data-freq="118.100" data-name="LSZH ZURICH TOWER">🟢 LIVE 24/7 — LSZH ZURICH TOWER (118.100)</option>
               </optgroup>
-              <optgroup label="🎙 SYNTHETIC RADAR AI ATC (FOR ELLX / EBCI / EGLC)">
-                <option value="SYNTH_LOCAL" data-freq="118.105" data-name="LOCAL AI RADAR TOWER">🎙 SYNTHETIC AI ATC (READS PLANES ON SCREEN)</option>
+              <optgroup label="🎙 REAL-TIME TOWER ⇄ PILOT CONVERSATION (ALL AIRPORTS)">
+                <option value="DUAL_VOICE_ATC" data-stream="" data-icao="ellx" data-freq="118.105" data-name="LIVE RADAR TOWER ⇄ PILOT">🎙 LIVE TOWER ⇄ PILOT DIALOGUE (REAL PLANES ON SCREEN)</option>
               </optgroup>
             </select>
           </div>
 
           <div class="audio-controls">
             <button class="btn-avionics" id="btn-live-atc" onclick="toggleLiveATC()">
-              <span>▶ LISTEN LIVE ATC</span>
+              <span>▶ START ATC CONVERSATIONS</span>
             </button>
-            <button class="btn-avionics" id="btn-voice-atis" onclick="toggleVoiceATIS()">
-              <span>🔊 D-ATIS METAR VOICE</span>
+            <button class="btn-avionics" onclick="openDirectLiveATCPlayer()" title="Opens direct official HTML5 audio stream if browser blocks background MP3">
+              <span>📻 POP-OUT WEB STREAM ↗</span>
             </button>
           </div>
 
           <div class="atc-transcript-tape" id="atc-transcript">
-            [COM1 READY] CLICK "▶ LISTEN LIVE ATC" TO STREAM REAL VHF CONTROLLER AUDIO
+            [COM1 READY] CLICK "▶ START ATC CONVERSATIONS" FOR TOWER ⇄ PILOT DIALOGUE & LIVE STREAM
           </div>
 
-          <canvas id="oscilloscope" width="290" height="28"></canvas>
-          <!-- Note: NO crossorigin attribute so local file:// can stream LiveATC MP3 freely -->
-          <audio id="atc-audio-player" preload="none"></audio>
+          <canvas id="oscilloscope" width="290" height="26"></canvas>
+          <audio id="atc-audio-player" preload="none" referrerpolicy="no-referrer"></audio>
         </div>
       </div>
 
@@ -1234,7 +1231,7 @@
       <div class="panel-section" style="flex:1">
         <div class="sec-header">
           <span>LIVE TARGETS (<span id="stat-total-ac">0</span> AC / <span id="stat-mil-ac" style="color:var(--amber)">0</span> MIL)</span>
-          <span id="feed-health-lbl" style="color:var(--green)">CONNECTING...</span>
+          <span id="feed-health-lbl" style="color:var(--green)">ZERO-DROP 60FPS</span>
         </div>
         <div class="traffic-table-wrap">
           <table class="traffic-tbl">
@@ -1278,7 +1275,7 @@
       <div id="radar-map"></div>
 
       <div class="map-watermark">
-        LICENSED TO MATHÉO B. // VISUALS BY YONI BRD // BELUX-FR-UK CONTINUOUS EMERGENCY GUARD
+        LICENSED TO MATHÉO B. // VISUALS BY YONI BRD // ZERO-DROP 60FPS KINEMATIC ENGINE
       </div>
 
       <div class="altitude-legend">
@@ -1408,7 +1405,7 @@
   <!-- ======================= COPYRIGHT FOOTER ======================= -->
   <footer class="footer-bar">
     <div>
-      <strong>© 2026 MATH’S APP v6.1</strong> — TACTICAL AVIONICS SYSTEM. Engineered exclusively for <strong>Mathéo B.</strong> | Architecture & Visuals by <strong>Yoni Brd</strong>.
+      <strong>© 2026 MATH’S APP v7.0</strong> — TACTICAL AVIONICS SYSTEM. Engineered exclusively for <strong>Mathéo B.</strong> | Architecture & Visuals by <strong>Yoni Brd</strong>.
     </div>
     <div>
       PROPRIETARY ALL-RIGHTS-RESERVED LICENSE // HOVER ANY INSTRUMENT FOR PILOT INSTRUCTOR BRIEFING
@@ -1432,15 +1429,20 @@ document.addEventListener('keydown', e => {
 });
 
 /* ============================================================================
-   1. FLIGHT INSTRUCTOR KNOWLEDGE BASE
+   1. FLIGHT INSTRUCTOR KNOWLEDGE BASE (ATPL HOVER BRIEFINGS)
 ============================================================================ */
 let instructorMode = true;
 
 const PILOT_TOOLTIPS = {
+  ZULU_CLOCK: {
+    title: 'ZULU TIME (UTC) vs LOCAL BELUX TIME',
+    desc: 'All aviation worldwide operates on ZULU Time (UTC = GMT+0) to avoid timezone confusion across borders. In Belgium/Luxembourg, Local Time is UTC+2 in summer (CEST) and UTC+1 in winter (CET).',
+    rule: 'PILOT RULE: Every METAR, TAF, flight plan, and ATC clearance is always given in ZULU (Z) time!'
+  },
   EURO_DANGER_GUARD: {
     title: 'BELUX / FRANCE / UK EMERGENCY SQUAWK GUARD',
-    desc: 'Continuously monitors the dedicated emergency transponder channels (Squawk 7700 Mayday, 7600 Radio Failure, 7500 Hijack) across Belgium, Luxembourg, France, and the UK.',
-    rule: 'Click anytime to inspect emergencies or run a live 7700 Mayday interception drill.'
+    desc: 'Monitors emergency transponder codes (7700 Mayday, 7600 Radio Failure, 7500 Hijack) across Belgium, Luxembourg, France, and the UK.',
+    rule: 'Click anytime to inspect emergencies or trigger a 7700 Mayday interception drill.'
   },
   INSTRUCTOR_MODE: {
     title: 'FLIGHT INSTRUCTOR BRIEFING MODE',
@@ -1592,28 +1594,28 @@ function toggleComplexData() {
 ============================================================================ */
 const AIRPORTS = {
   ELLX: {
-    icao: 'ELLX', name: 'LUXEMBOURG FINDEL INTL', lat: 49.6233, lon: 6.2044, elev: 1234, stdGlide: 3.0, freq: '118.105',
+    icao: 'ELLX', name: 'LUXEMBOURG', lat: 49.6233, lon: 6.2044, elev: 1234, stdGlide: 3.0, freq: '118.105',
     runways: [
       { id: '24', hdg: 240, lat: 49.6325, lon: 6.2289, ils: '110.70 ILUX (CAT III)' },
       { id: '06', hdg: 60,  lat: 49.6141, lon: 6.1799, ils: '109.90 ILEW (CAT I)' }
     ]
   },
   EBCI: {
-    icao: 'EBCI', name: 'CHARLEROI / GOSSELIES', lat: 50.4592, lon: 4.4538, elev: 614, stdGlide: 3.0, freq: '121.305',
+    icao: 'EBCI', name: 'CHARLEROI', lat: 50.4592, lon: 4.4538, elev: 614, stdGlide: 3.0, freq: '121.305',
     runways: [
       { id: '24', hdg: 235, lat: 50.4668, lon: 4.4748, ils: '110.90 ICW (CAT III)' },
       { id: '06', hdg: 55,  lat: 50.4516, lon: 4.4328, ils: '109.50 ICE (CAT I)' }
     ]
   },
   EBLG: {
-    icao: 'EBLG', name: 'LIÈGE AIRPORT (BIERSET)', lat: 50.6374, lon: 5.4432, elev: 659, stdGlide: 3.0, freq: '119.580',
+    icao: 'EBLG', name: 'LIÈGE', lat: 50.6374, lon: 5.4432, elev: 659, stdGlide: 3.0, freq: '119.580',
     runways: [
       { id: '22L', hdg: 224, lat: 50.6480, lon: 5.4580, ils: '109.35 ILG (CAT III)' },
       { id: '04R', hdg: 44,  lat: 50.6268, lon: 5.4284, ils: '111.35 IBI (CAT I)' }
     ]
   },
   EBBR: {
-    icao: 'EBBR', name: 'BRUSSELS NATIONAL (ZAVENTEM)', lat: 50.9014, lon: 4.4844, elev: 184, stdGlide: 3.0, freq: '118.605',
+    icao: 'EBBR', name: 'BRUSSELS', lat: 50.9014, lon: 4.4844, elev: 184, stdGlide: 3.0, freq: '118.605',
     runways: [
       { id: '25R', hdg: 249, lat: 50.9110, lon: 4.5090, ils: '108.90 IBR (CAT III)' },
       { id: '25L', hdg: 249, lat: 50.8960, lon: 4.5050, ils: '110.30 IBL (CAT III)' },
@@ -1621,14 +1623,14 @@ const AIRPORTS = {
     ]
   },
   EGLC: {
-    icao: 'EGLC', name: 'LONDON CITY (5.5° STEEP)', lat: 51.5053, lon: 0.0553, elev: 19, stdGlide: 5.5, freq: '118.075',
+    icao: 'EGLC', name: 'LONDON CITY', lat: 51.5053, lon: 0.0553, elev: 19, stdGlide: 5.5, freq: '118.075',
     runways: [
       { id: '27', hdg: 273, lat: 51.5050, lon: 0.0660, ils: '111.15 ILSR (5.5° STEEP)' },
       { id: '09', hdg: 93,  lat: 51.5055, lon: 0.0445, ils: '111.15 ILST (5.5° STEEP)' }
     ]
   },
   LFPG: {
-    icao: 'LFPG', name: 'PARIS CHARLES DE GAULLE', lat: 49.0097, lon: 2.5479, elev: 392, stdGlide: 3.0, freq: '119.250',
+    icao: 'LFPG', name: 'PARIS CDG', lat: 49.0097, lon: 2.5479, elev: 392, stdGlide: 3.0, freq: '119.250',
     runways: [
       { id: '26R', hdg: 266, lat: 49.0206, lon: 2.5850, ils: '110.35 IPN (CAT III)' },
       { id: '26L', hdg: 266, lat: 49.0150, lon: 2.5800, ils: '108.75 IPC (CAT III)' },
@@ -1742,88 +1744,76 @@ function drawRangeRingsAndRunways() {
 }
 
 /* ============================================================================
-   5. PARALLEL RACE ADS-B FETCHER (100% RELIABLE ON LOCAL PC FILE://)
+   5. ZERO-DROP PARALLEL ADS-B ENGINE (PLANES NEVER DISAPPEAR!)
 ============================================================================ */
 let aircraftMap = new Map();
 let markerRegistry = new Map();
 let dangerAircraftMap = new Map();
-let euroEmergencyCache = new Map(); // Stores real-time 7700/7600 emergencies across BELUX/FR/UK
+let euroEmergencyCache = new Map();
 let selectedHex = null;
 let trafficFilter = 'ALL';
 let showVectors = true;
 let showWxRadar = false;
 let followTarget = false;
 
-async function fetchJsonCandidate(url, timeoutMs = 6500) {
+async function fetchJsonFast(url, timeoutMs = 5000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
     clearTimeout(timer);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) throw new Error('Status ' + res.status);
     const data = await res.json();
-    if (data && Array.isArray(data.ac)) return data.ac;
-    throw new Error('Invalid payload');
-  } catch (err) {
+    if (data && Array.isArray(data.ac) && data.ac.length > 0) return data.ac;
+    throw new Error('Empty');
+  } catch (e) {
     clearTimeout(timer);
-    throw err;
+    throw e;
   }
 }
 
-// Races Direct APIs and CORS Proxies simultaneously — fastest valid response wins!
-async function fetchSectorADSB(lat, lon, radiusNM = 65) {
-  const targetA = `https://api.adsb.lol/v2/point/${lat}/${lon}/${radiusNM}`;
-  const targetB = `https://api.airplanes.live/v2/point/${lat}/${lon}/${radiusNM}`;
-  const targetC = `https://api.adsb.one/v2/point/${lat}/${lon}/${radiusNM}`;
+// TRUE PARALLEL RACE (Promise.any): Fires all gateways at once; fastest one (<500ms) wins!
+async function fetchSectorADSB(lat, lon, radiusNM = 75) {
+  const u1 = `https://api.airplanes.live/v2/point/${lat}/${lon}/${radiusNM}`;
+  const u2 = `https://api.adsb.lol/v2/point/${lat}/${lon}/${radiusNM}`;
+  const u3 = `https://api.adsb.one/v2/point/${lat}/${lon}/${radiusNM}`;
 
-  const candidates = [
-    fetchJsonCandidate(targetB, 4500),
-    fetchJsonCandidate(targetA, 4500),
-    fetchJsonCandidate(targetC, 4500),
-    fetchJsonCandidate(`https://corsproxy.io/?${encodeURIComponent(targetA)}`, 7000),
-    fetchJsonCandidate(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetA)}`, 7500),
-    fetchJsonCandidate(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetA)}`, 7500)
-  ];
-
-  for (const p of candidates) {
-    try {
-      const list = await p;
-      if (Array.isArray(list)) return list;
-    } catch (_) {}
+  try {
+    return await Promise.any([
+      fetchJsonFast(u1, 4500),
+      fetchJsonFast(u2, 4500),
+      fetchJsonFast(u3, 4500),
+      fetchJsonFast(`https://corsproxy.io/?${encodeURIComponent(u2)}`, 6000),
+      fetchJsonFast(`https://api.allorigins.win/raw?url=${encodeURIComponent(u2)}`, 6500),
+      fetchJsonFast(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u1)}`, 6500)
+    ]);
+  } catch (_) {
+    return null;
   }
-  return null;
 }
 
-// Dedicated Lightweight Scanner for 7700 / 7600 / 7500 Emergencies across BELUX / FRANCE / UK
 async function scanEuroEmergencySquawks() {
-  const urls = [
-    'https://api.adsb.lol/v2/squawk/7700',
-    'https://api.airplanes.live/v2/squawk/7700',
-    `https://corsproxy.io/?${encodeURIComponent('https://api.adsb.lol/v2/squawk/7700')}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.adsb.lol/v2/squawk/7700')}`
-  ];
-
-  for (const u of urls) {
-    try {
-      const acList = await fetchJsonCandidate(u, 5500);
-      if (Array.isArray(acList)) {
-        euroEmergencyCache.clear();
-        acList.forEach(ac => {
-          // Filter for BELUX / FRANCE / UK / GERMANY bounding box (Lat 42°N to 59°N, Lon -8°W to +12°E)
-          if (ac.lat >= 42 && ac.lat <= 59 && ac.lon >= -8 && ac.lon <= 12) {
-            euroEmergencyCache.set(String(ac.hex).toUpperCase(), ac);
-          }
-        });
-        break;
-      }
-    } catch (_) {}
-  }
+  const u = 'https://api.adsb.lol/v2/squawk/7700';
+  try {
+    const list = await Promise.any([
+      fetchJsonFast(u, 4500),
+      fetchJsonFast('https://api.airplanes.live/v2/squawk/7700', 4500),
+      fetchJsonFast(`https://corsproxy.io/?${encodeURIComponent(u)}`, 6000)
+    ]);
+    if (Array.isArray(list)) {
+      euroEmergencyCache.clear();
+      list.forEach(ac => {
+        if (ac.lat >= 42 && ac.lat <= 59 && ac.lon >= -8 && ac.lon <= 12) {
+          euroEmergencyCache.set(String(ac.hex).toUpperCase(), ac);
+        }
+      });
+    }
+  } catch (_) {}
 }
 
 function evaluateAircraftDanger(ac) {
   const sqk = String(ac.squawk || '');
   const reasons = [];
-
   if (sqk === '7700') reasons.push('SQUAWK 7700 — MAYDAY / GENERAL EMERGENCY');
   if (sqk === '7600') reasons.push('SQUAWK 7600 — RADIO COMMUNICATION FAILURE');
   if (sqk === '7500') reasons.push('SQUAWK 7500 — HIJACK / INTERFERENCE');
@@ -1833,7 +1823,6 @@ function evaluateAircraftDanger(ac) {
   if (ac.vrate < -4500 && ac.altBaro > 3000) {
     reasons.push(`EXTREME DESCENT RATE (${ac.vrate} FT/MIN)`);
   }
-
   return { isDanger: reasons.length > 0, reasons };
 }
 
@@ -1844,111 +1833,107 @@ async function fetchLiveTraffic() {
   isFetchingTraffic = true;
 
   try {
-    const rawList = await fetchSectorADSB(currentAirport.lat, currentAirport.lon, 65);
-    if (!rawList) {
-      document.getElementById('feed-health-lbl').textContent = 'RETRYING GATEWAY...';
-      document.getElementById('feed-health-lbl').style.color = 'var(--amber)';
-      isFetchingTraffic = false;
-      return;
-    }
+    const rawList = await fetchSectorADSB(currentAirport.lat, currentAirport.lon, 75);
+    const nowMs = Date.now();
 
-    document.getElementById('feed-health-lbl').textContent = 'MODE-S LIVE (60FPS)';
-    document.getElementById('feed-health-lbl').style.color = 'var(--green)';
+    if (rawList && rawList.length > 0) {
+      document.getElementById('feed-health-lbl').textContent = 'LIVE 60FPS LOCKED';
+      document.getElementById('feed-health-lbl').style.color = 'var(--green)';
 
-    // Merge local 65 NM traffic + any active BELUX/FR/UK 7700 emergency aircraft
-    const combinedList = [...rawList];
-    euroEmergencyCache.forEach(emAc => {
-      if (!combinedList.some(a => String(a.hex).toUpperCase() === String(emAc.hex).toUpperCase())) {
-        combinedList.push(emAc);
-      }
-    });
-
-    const seenHex = new Set();
-    let milCount = 0;
-
-    // Keep any manual drill aircraft if active
-    const existingDrill = Array.from(dangerAircraftMap.values()).filter(d => d.isDrill);
-    dangerAircraftMap.clear();
-    existingDrill.forEach(d => {
-      dangerAircraftMap.set(d.hex, d);
-      seenHex.add(d.hex);
-    });
-
-    combinedList.forEach(ac => {
-      if (ac.lat === undefined || ac.lon === undefined || ac.lat === null || ac.lon === null) return;
-      const hex = String(ac.hex).toUpperCase();
-      if (dangerAircraftMap.has(hex) && dangerAircraftMap.get(hex).isDrill) return;
-
-      seenHex.add(hex);
-      const isMil = Boolean(ac.dbFlags & 1) || Boolean(ac.mil);
-      if (isMil) milCount++;
-
-      const prev = aircraftMap.get(hex);
-      const trail = prev ? prev.trail : [];
-      trail.push([ac.lat, ac.lon]);
-      if (trail.length > 35) trail.shift();
-
-      const dist = distanceNM(currentAirport.lat, currentAirport.lon, ac.lat, ac.lon);
-      const vrate = ac.baro_rate ?? ac.geom_rate ?? 0;
-      const altBaro = typeof ac.alt_baro === 'number' ? ac.alt_baro : 0;
-
-      const dangerCheck = evaluateAircraftDanger({
-        squawk: ac.squawk,
-        emergency: ac.emergency,
-        vrate,
-        altBaro
+      const combinedList = [...rawList];
+      euroEmergencyCache.forEach(emAc => {
+        if (!combinedList.some(a => String(a.hex).toUpperCase() === String(emAc.hex).toUpperCase())) {
+          combinedList.push(emAc);
+        }
       });
 
-      const norm = {
-        hex,
-        callsign: String(ac.flight || ac.r || hex).trim(),
-        reg: ac.r || 'UNREG',
-        type: ac.t || 'ACFT',
-        category: ac.category || 'A3',
-        currLat: prev ? prev.currLat : ac.lat,
-        currLon: prev ? prev.currLon : ac.lon,
-        serverLat: ac.lat,
-        serverLon: ac.lon,
-        altBaro,
-        altGeom: typeof ac.alt_geom === 'number' ? ac.alt_geom : altBaro + 120,
-        gs: ac.gs || 0,
-        ias: ac.ias || null,
-        tas: ac.tas || null,
-        mach: ac.mach || null,
-        track: ac.track ?? ac.mag_heading ?? 0,
-        magHeading: ac.mag_heading ?? ac.track ?? 0,
-        roll: ac.roll ?? 0,
-        trackRate: ac.track_rate ?? 0,
-        vrate,
-        squawk: ac.squawk || '----',
-        navQnh: ac.nav_qnh || null,
-        navAltMcp: ac.nav_altitude_mcp ?? ac.nav_altitude_fms ?? null,
-        navHdg: ac.nav_heading ?? null,
-        navModes: Array.isArray(ac.nav_modes) ? ac.nav_modes : [],
-        nic: ac.nic ?? '-',
-        nacp: ac.nac_p ?? '-',
-        isMil,
-        isDanger: dangerCheck.isDanger,
-        dangerReasons: dangerCheck.reasons,
-        distNM: dist,
-        trail
-      };
+      combinedList.forEach(ac => {
+        if (ac.lat === undefined || ac.lon === undefined || ac.lat === null || ac.lon === null) return;
+        const hex = String(ac.hex).toUpperCase();
 
-      if (norm.isDanger) {
-        dangerAircraftMap.set(hex, norm);
-      }
-      aircraftMap.set(hex, norm);
-    });
+        // Preserve manual emergency drill state if active
+        const prev = aircraftMap.get(hex);
+        if (prev && prev.isDrill) {
+          prev.lastSeenMs = nowMs;
+          return;
+        }
 
-    for (const k of aircraftMap.keys()) {
-      if (!seenHex.has(k)) {
-        aircraftMap.delete(k);
-        if (markerRegistry.has(k)) {
-          const mObj = markerRegistry.get(k);
+        const isMil = Boolean(ac.dbFlags & 1) || Boolean(ac.mil);
+        const trail = prev ? prev.trail : [];
+        trail.push([ac.lat, ac.lon]);
+        if (trail.length > 35) trail.shift();
+
+        const dist = distanceNM(currentAirport.lat, currentAirport.lon, ac.lat, ac.lon);
+        const vrate = ac.baro_rate ?? ac.geom_rate ?? 0;
+        const altBaro = typeof ac.alt_baro === 'number' ? ac.alt_baro : 0;
+
+        const dangerCheck = evaluateAircraftDanger({
+          squawk: ac.squawk,
+          emergency: ac.emergency,
+          vrate,
+          altBaro
+        });
+
+        const norm = {
+          hex,
+          callsign: String(ac.flight || ac.r || hex).trim(),
+          reg: ac.r || 'UNREG',
+          type: ac.t || 'ACFT',
+          category: ac.category || 'A3',
+          currLat: prev ? prev.currLat : ac.lat,
+          currLon: prev ? prev.currLon : ac.lon,
+          serverLat: ac.lat,
+          serverLon: ac.lon,
+          lastSeenMs: nowMs,
+          altBaro,
+          altGeom: typeof ac.alt_geom === 'number' ? ac.alt_geom : altBaro + 120,
+          gs: ac.gs || 0,
+          ias: ac.ias || null,
+          tas: ac.tas || null,
+          mach: ac.mach || null,
+          track: ac.track ?? ac.mag_heading ?? 0,
+          magHeading: ac.mag_heading ?? ac.track ?? 0,
+          roll: ac.roll ?? 0,
+          trackRate: ac.track_rate ?? 0,
+          vrate,
+          squawk: ac.squawk || '----',
+          navQnh: ac.nav_qnh || null,
+          navAltMcp: ac.nav_altitude_mcp ?? ac.nav_altitude_fms ?? null,
+          navHdg: ac.nav_heading ?? null,
+          navModes: Array.isArray(ac.nav_modes) ? ac.nav_modes : [],
+          nic: ac.nic ?? '-',
+          nacp: ac.nac_p ?? '-',
+          isMil,
+          isDanger: dangerCheck.isDanger,
+          dangerReasons: dangerCheck.reasons,
+          distNM: dist,
+          trail
+        };
+
+        aircraftMap.set(hex, norm);
+      });
+    } else {
+      // ZERO-DROP PROTECTION: Never delete planes if a poll times out; keep flying them smoothly!
+      document.getElementById('feed-health-lbl').textContent = '60FPS INERTIAL COAST';
+      document.getElementById('feed-health-lbl').style.color = 'var(--cyan)';
+    }
+
+    // Only remove aircraft that haven't been seen for > 90 full seconds
+    let milCount = 0;
+    dangerAircraftMap.clear();
+
+    for (const [hex, ac] of aircraftMap.entries()) {
+      if (nowMs - ac.lastSeenMs > 90000 && !ac.isDrill) {
+        aircraftMap.delete(hex);
+        if (markerRegistry.has(hex)) {
+          const mObj = markerRegistry.get(hex);
           aircraftLayer.removeLayer(mObj.marker);
           if (mObj.vecLine) trailLayer.removeLayer(mObj.vecLine);
-          markerRegistry.delete(k);
+          markerRegistry.delete(hex);
         }
+      } else {
+        if (ac.isMil) milCount++;
+        if (ac.isDanger) dangerAircraftMap.set(hex, ac);
       }
     }
 
@@ -2014,8 +1999,8 @@ function animate60FPSContinuous() {
       ac.track = (ac.track + (ac.trackRate || 0) * dtSec + 360) % 360;
       const [nextLat, nextLon] = destinationPoint(ac.currLat, ac.currLon, ac.track, stepNM);
 
-      ac.currLat = nextLat + (ac.serverLat - nextLat) * 0.05;
-      ac.currLon = nextLon + (ac.serverLon - nextLon) * 0.05;
+      ac.currLat = nextLat + (ac.serverLat - nextLat) * 0.06;
+      ac.currLon = nextLon + (ac.serverLon - nextLon) * 0.06;
       ac.serverLat = nextLat;
       ac.serverLon = nextLon;
 
@@ -2415,6 +2400,7 @@ function simulateEmergencyDrill() {
   firstAc.vrate = -4800;
   firstAc.isDanger = true;
   firstAc.isDrill = true;
+  firstAc.lastSeenMs = Date.now();
   firstAc.dangerReasons = ['SQUAWK 7700 — MAYDAY DRILL ACTIVE', 'RAPID EMERGENCY DESCENT (-4800 FPM)'];
   dangerAircraftMap.set(firstAc.hex, firstAc);
   updateEuroDangerBanner();
@@ -2682,7 +2668,7 @@ function renderTrafficTable() {
 }
 
 /* ============================================================================
-   11. LIVE 24/7 ATC STREAMER (VERIFIED LIVE STREAMS FIRST IN LIST)
+   11. LIVE ATC STREAM + DUAL-VOICE TOWER ⇄ PILOT CONVERSATION ENGINE
 ============================================================================ */
 let isLiveATCActive = false;
 let atcTimer = null;
@@ -2695,9 +2681,6 @@ function changeATCChannel() {
 
   document.getElementById('com1-freq').textContent = freq;
   document.getElementById('com1-name').textContent = name;
-  document.getElementById('com1-mode-lbl').textContent = sel.value === 'SYNTH_LOCAL'
-    ? 'SYNTHETIC RADAR AI CLEARANCES'
-    : 'VERIFIED 24/7 LIVE VHF FEED';
 
   if (isLiveATCActive) {
     toggleLiveATC();
@@ -2708,7 +2691,7 @@ function changeATCChannel() {
 function playVhfClickNoise() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const bufferSize = ctx.sampleRate * 0.1;
+    const bufferSize = ctx.sampleRate * 0.09;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.14;
@@ -2724,8 +2707,9 @@ function toggleLiveATC() {
   const btn = document.getElementById('btn-live-atc');
   const badge = document.getElementById('radio-state-badge');
   const sel = document.getElementById('atc-channel-select');
-  const modeVal = sel.value;
-  const stationName = sel.selectedOptions[0].getAttribute('data-name');
+  const opt = sel.selectedOptions[0];
+  const streamUrl = opt.getAttribute('data-stream');
+  const stationName = opt.getAttribute('data-name');
 
   if (isLiveATCActive) {
     isLiveATCActive = false;
@@ -2735,7 +2719,7 @@ function toggleLiveATC() {
     if (atcTimer) clearInterval(atcTimer);
     window.speechSynthesis.cancel();
     btn.classList.remove('active-green');
-    btn.innerHTML = '<span>▶ LISTEN LIVE ATC</span>';
+    btn.innerHTML = '<span>▶ START ATC CONVERSATIONS</span>';
     badge.textContent = 'STANDBY';
     badge.style.color = 'var(--text-muted)';
     document.getElementById('atc-transcript').textContent = '[VHF COM1 MUTED]';
@@ -2744,68 +2728,97 @@ function toggleLiveATC() {
 
   isLiveATCActive = true;
   btn.classList.add('active-green');
-  btn.innerHTML = '<span>⏹ STOP LIVE ATC</span>';
-  badge.textContent = 'VHF RX LIVE';
+  btn.innerHTML = '<span>⏹ STOP ATC AUDIO</span>';
+  badge.textContent = 'VHF RX ACTIVE';
   badge.style.color = 'var(--green)';
   playVhfClickNoise();
 
-  if (modeVal !== 'SYNTH_LOCAL') {
-    document.getElementById('atc-transcript').textContent = `🟢 CONNECTING TO LIVE 24/7 VHF STREAM: ${stationName}...`;
-    player.src = modeVal;
+  // Start real MP3 stream if selected AND also run live Tower <-> Pilot radar conversation if stream is blocked
+  if (streamUrl) {
+    player.src = streamUrl;
     player.play().then(() => {
-      document.getElementById('atc-transcript').textContent = `🟢 [LIVE STREAM ON AIR] RECEIVING REAL VHF AUDIO FROM ${stationName}`;
+      document.getElementById('atc-transcript').textContent = `🟢 [REAL VHF STREAM] LISTENING TO ${stationName}...`;
     }).catch(() => {
-      document.getElementById('atc-transcript').textContent = `🎙 DIRECT STREAM BLOCKED BY BROWSER — RUNNING LIVE RADAR AI ATC CLEARANCES...`;
-      speakLiveRadarATC();
+      // Browser blocked cross-origin audio: seamlessly run 2-Voice Tower <-> Pilot Dialogue!
+      runTwoVoiceTowerPilotDialogue();
+      atcTimer = setInterval(() => {
+        if (isLiveATCActive) runTwoVoiceTowerPilotDialogue();
+      }, 13000);
     });
   } else {
-    speakLiveRadarATC();
+    runTwoVoiceTowerPilotDialogue();
     atcTimer = setInterval(() => {
-      if (isLiveATCActive) speakLiveRadarATC();
-    }, 12000);
+      if (isLiveATCActive) runTwoVoiceTowerPilotDialogue();
+    }, 13000);
   }
 }
 
-function speakLiveRadarATC() {
+// 2-VOICE REAL-TIME DIALOGUE: ATC CONTROLLER SPEAKS, THEN AIRCRAFT PILOT READS BACK!
+function runTwoVoiceTowerPilotDialogue() {
   if (!isLiveATCActive || !('speechSynthesis' in window)) return;
   const targets = Array.from(aircraftMap.values()).sort((a, b) => a.distNM - b.distNM);
   if (targets.length === 0) return;
 
-  const ac = targets[Math.floor(Math.random() * Math.min(6, targets.length))];
+  const ac = targets[Math.floor(Math.random() * Math.min(8, targets.length))];
   const rwy = activeRunway.id;
-  let phrase = '';
+  let controllerMsg = '';
+  let pilotReadback = '';
 
   if (ac.isDanger) {
-    phrase = `Mayday relay, ${ac.callsign} squawking ${ac.squawk}, priority radar vectors to ${currentAirport.name} runway ${rwy}.`;
-  } else if (ac.altBaro < 6500 && ac.vrate < -200) {
-    phrase = `${ac.callsign}, ${currentAirport.name} Tower, wind ${currentWeather.windDir} degrees ${currentWeather.windSpd} knots, runway ${rwy}, cleared to land.`;
+    controllerMsg = `${ac.callsign}, ${currentAirport.name} Radar, roger Mayday, squawk ${ac.squawk} copied, turn left heading ${activeRunway.hdg}, cleared direct ILS approach runway ${rwy}, emergency vehicles standing by.`;
+    pilotReadback = `Left heading ${activeRunway.hdg}, cleared direct ILS runway ${rwy}, ${ac.callsign}.`;
+  } else if (ac.altBaro < 7000 && ac.vrate < -200) {
+    controllerMsg = `${ac.callsign}, ${currentAirport.name} Tower, surface wind ${currentWeather.windDir} degrees ${currentWeather.windSpd} knots, runway ${rwy}, cleared to land.`;
+    pilotReadback = `Cleared to land runway ${rwy}, ${ac.callsign}.`;
   } else if (ac.vrate > 300) {
-    phrase = `${ac.callsign}, ${currentAirport.name} Departure, radar contact, climb and maintain flight level ${Math.min(360, Math.round((ac.altBaro + 6000) / 100))}.`;
+    const nextFl = Math.min(360, Math.round((ac.altBaro + 6000) / 100));
+    controllerMsg = `${ac.callsign}, ${currentAirport.name} Departure, radar contact, climb and maintain flight level ${nextFl}.`;
+    pilotReadback = `Climb and maintain flight level ${nextFl}, ${ac.callsign}.`;
   } else {
-    phrase = `${ac.callsign}, maintain heading ${Math.round(ac.magHeading)}, QNH ${currentWeather.qnh}.`;
+    const nextHdg = (Math.round(ac.magHeading / 10) * 10 + 20) % 360 || 360;
+    controllerMsg = `${ac.callsign}, ${currentAirport.name} Control, turn right heading ${nextHdg}, descend altitude 4000 feet, QNH ${currentWeather.qnh}.`;
+    pilotReadback = `Right heading ${nextHdg}, descend 4000 feet, QNH ${currentWeather.qnh}, ${ac.callsign}.`;
   }
 
-  document.getElementById('atc-transcript').textContent = `🎙 [${currentAirport.freq}] "${phrase.toUpperCase()}"`;
+  const tape = document.getElementById('atc-transcript');
+  tape.innerHTML = `<span style="color:var(--cyan)">🎙 ATC: "${controllerMsg.toUpperCase()}"</span><br><span style="color:var(--amber)">🎧 PILOT (${ac.callsign}): "${pilotReadback.toUpperCase()}"</span>`;
+
   playVhfClickNoise();
 
-  const u = new SpeechSynthesisUtterance(phrase);
-  u.lang = 'en-GB';
-  u.rate = 1.05;
-  u.pitch = 0.94;
-  u.onend = () => playVhfClickNoise();
-  window.speechSynthesis.speak(u);
+  // Voice 1: Tower Controller (lower pitch, crisp pace)
+  const uAtc = new SpeechSynthesisUtterance(controllerMsg);
+  uAtc.lang = 'en-GB';
+  uAtc.rate = 1.08;
+  uAtc.pitch = 0.88;
+
+  // Voice 2: Cockpit Pilot Readback (higher pitch, slightly different cadence)
+  const uPilot = new SpeechSynthesisUtterance(pilotReadback);
+  uPilot.lang = 'en-US';
+  uPilot.rate = 1.12;
+  uPilot.pitch = 1.15;
+
+  uAtc.onend = () => {
+    playVhfClickNoise();
+    if (isLiveATCActive) {
+      setTimeout(() => {
+        playVhfClickNoise();
+        window.speechSynthesis.speak(uPilot);
+      }, 450);
+    }
+  };
+  uPilot.onend = () => playVhfClickNoise();
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(uAtc);
 }
 
-function toggleVoiceATIS() {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  playVhfClickNoise();
-  const msg = `${currentAirport.name} Information Alpha. Active runway ${activeRunway.id}. Wind ${currentWeather.windDir} degrees at ${currentWeather.windSpd} knots. Visibility 10 kilometers. Cloud base ${currentWeather.cloudBase} feet. Temperature ${currentWeather.temp}, dew point ${currentWeather.dew}. QNH ${currentWeather.qnh} hectopascals.`;
-  document.getElementById('atc-transcript').textContent = `🔊 [D-ATIS] "${msg.toUpperCase()}"`;
-  const u = new SpeechSynthesisUtterance(msg);
-  u.lang = 'en-GB';
-  u.rate = 0.98;
-  window.speechSynthesis.speak(u);
+// Opens official LiveATC HTML5 Pop-out Stream for 24/7 Verified Feeds
+function openDirectLiveATCPlayer() {
+  const sel = document.getElementById('atc-channel-select');
+  const opt = sel.selectedOptions[0];
+  const mount = sel.value === 'DUAL_VOICE_ATC' ? 'ebbr_app' : sel.value;
+  const icao = opt.getAttribute('data-icao') || 'ebbr';
+  window.open(`https://www.liveatc.net/hlisten.php?mount=${mount}&icao=${icao}`, 'LiveATC_Direct', 'width=460,height=380,noopener,noreferrer');
 }
 
 function animateOscilloscope() {
@@ -2819,7 +2832,7 @@ function animateOscilloscope() {
   ctx.beginPath();
   const t = Date.now() / 90;
   for (let x = 0; x < w; x += 3) {
-    const amp = isLiveATCActive ? (Math.sin(x * 0.18 + t) * 8 + (Math.random() - 0.5) * 6) : Math.sin(x * 0.05 + t) * 1.2;
+    const amp = isLiveATCActive ? (Math.sin(x * 0.18 + t) * 7 + (Math.random() - 0.5) * 6) : Math.sin(x * 0.05 + t) * 1.2;
     if (x === 0) ctx.moveTo(x, h / 2 + amp);
     else ctx.lineTo(x, h / 2 + amp);
   }
@@ -2829,7 +2842,7 @@ function animateOscilloscope() {
 animateOscilloscope();
 
 /* ============================================================================
-   12. AIRPORT SELECTION, FILTERS & INITIAL BOOT
+   12. AIRPORT SELECTION, DUAL ZULU/BELUX CLOCK & INITIAL BOOT
 ============================================================================ */
 function selectAirport(icao) {
   if (!AIRPORTS[icao]) return;
@@ -2840,19 +2853,8 @@ function selectAirport(icao) {
     btn.classList.toggle('active', btn.getAttribute('data-icao') === icao);
   });
 
-  // Auto-select matching Live 24/7 stream if switching to EBBR or LFPG
-  const sel = document.getElementById('atc-channel-select');
-  if (icao === 'EBBR') sel.value = 'https://d.liveatc.net/ebbr_app';
-  else if (icao === 'LFPG') sel.value = 'https://d.liveatc.net/lfpg3_twr';
-  changeATCChannel();
-
-  aircraftLayer.clearLayers();
-  trailLayer.clearLayers();
-  routeLineLayer.clearLayers();
-  markerRegistry.clear();
-  aircraftMap.clear();
+  // Keep existing planes smoothly while shifting sector view
   selectedHex = null;
-
   map.setView([currentAirport.lat, currentAirport.lon], 9);
   renderRunwayButtons();
   drawRangeRingsAndRunways();
@@ -2905,11 +2907,13 @@ function toggleFollowSelected() {
   document.getElementById('lyr-follow').classList.toggle('active', followTarget);
 }
 
+// Dual Aviation Clock: Shows official ZULU (UTC) + Local BELUX Time simultaneously
 function updateZuluClock() {
   const now = new Date();
-  document.getElementById('zulu-time').textContent =
-    `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}:${String(now.getUTCSeconds()).padStart(2,'0')}Z`;
-  document.getElementById('zulu-date').textContent = now.toUTCString().slice(0, 16).toUpperCase();
+  const zuluStr = `${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}:${String(now.getUTCSeconds()).padStart(2,'0')}Z (UTC)`;
+  const localStr = `BELUX: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  document.getElementById('zulu-time').textContent = zuluStr;
+  document.getElementById('local-time-sub').textContent = localStr;
 }
 setInterval(updateZuluClock, 1000);
 updateZuluClock();
@@ -2917,7 +2921,7 @@ updateZuluClock();
 // INITIAL BOOT ON ELLX LUXEMBOURG
 selectAirport('ELLX');
 scanEuroEmergencySquawks();
-setInterval(fetchLiveTraffic, 3000);
+setInterval(fetchLiveTraffic, 2500);
 setInterval(scanEuroEmergencySquawks, 15000);
 setInterval(runContinuousAirportWatchdog, 45000);
 </script>

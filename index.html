@@ -1837,13 +1837,11 @@ async function pollModeSV2(lat, lon, radiusNM = 75) {
   const rawOne  = `https://api.adsb.one/v2/point/${lat}/${lon}/${radiusNM}`;
 
   const endpoints = [
+    { name: 'CLOUDFLARE PRIVATE RELAY', url: `https://little-recipe-ad9cmaths-radar-relay.inoyoni-me.workers.dev/?lat=${lat}&lon=${lon}&dist=${radiusNM}&_=${Date.now()}` },
     { name: 'ADSB.FI DIRECT', url: rawFi },
     { name: 'ADSB.ONE DIRECT', url: rawOne },
     { name: 'AIRPLANES.LIVE', url: rawLive },
-    { name: 'ADSB.LOL DIRECT', url: rawLol },
-    { name: 'MODE-S TUNNEL 1', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rawLol)}` },
-    { name: 'MODE-S TUNNEL 2', url: `https://corsproxy.io/?${encodeURIComponent(rawLol)}` },
-    { name: 'MODE-S TUNNEL 3', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(rawFi)}` }
+    { name: 'ADSB.LOL DIRECT', url: rawLol }
   ];
 
   const tasks = endpoints.map(async ep => {

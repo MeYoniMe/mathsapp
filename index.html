@@ -1974,7 +1974,7 @@ async function fetchLiveTraffic() {
     dangerAircraftMap.clear();
 
     for (const [hex, ac] of aircraftMap.entries()) {
-      if (nowMs - ac.lastSeenMs > 40000 && !ac.isDrill) {
+      if (nowMs - ac.lastSeenMs > 180000 && !ac.isDrill) {
         aircraftMap.delete(hex);
         if (markerRegistry.has(hex)) {
           const mObj = markerRegistry.get(hex);
@@ -2976,7 +2976,7 @@ updateZuluClock();
 // 1. Load Instant-Boot Cache in 0.01s, then start 2.2s Turbo Polling
 loadInstantBootCache();
 selectAirport('ELLX');
-setInterval(fetchLiveTraffic, 2200);
+setInterval(fetchLiveTraffic, 3500);
 setInterval(runContinuousAirportWatchdog, 45000);
 </script>
 </body>

@@ -963,9 +963,23 @@
 
     .footer-bar strong { color: var(--cyan); }
 
+  /* SUPPRESSION DU RECTANGLE BLANC LEAFLET AUTOUR DES AVIONS & BALISES */
+    .leaflet-tooltip {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .leaflet-tooltip-right::before,
+    .leaflet-tooltip-left::before,
+    .leaflet-tooltip-top::before,
+    .leaflet-tooltip-bottom::before {
+      display: none !important;
+    }
+
     .ac-label {
-      background: rgba(6, 9, 15, 0.92);
-      border: 1px solid var(--border-bright);
+      background: rgba(4, 6, 10, 0.72);
+      border: 1px solid rgba(0, 229, 255, 0.35);
       color: #fff;
       font-family: var(--font-mono);
       font-size: 8.5px;
@@ -973,6 +987,8 @@
       border-radius: 2px;
       white-space: nowrap;
       pointer-events: none;
+      text-shadow: 0 1px 3px #000;
+      backdrop-filter: blur(2px);
     }
 
     .ac-label.danger-lbl {

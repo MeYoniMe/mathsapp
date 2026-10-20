@@ -985,6 +985,141 @@
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg-deep); }
     ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+/* ==========================================================================
+       SMARTPHONE & iPHONE EFB RESPONSIVE ENGINE (IGNORED ON PC)
+    ========================================================================== */
+    .mobile-efb-nav, .mobile-quick-hud { display: none; }
+
+    @media (max-width: 920px) {
+      html, body { font-size: 12px; height: 100dvh; overflow: hidden; }
+      
+      .cockpit-shell {
+        grid-template-rows: auto 1fr 56px;
+        height: 100dvh;
+      }
+
+      /* Top Bar compacte et scrollable au doigt pour les 6 aéroports */
+      .top-bar {
+        flex-wrap: wrap;
+        padding: 6px 8px;
+        gap: 6px;
+        height: auto;
+      }
+      .brand-block { border-right: none; padding-right: 0; }
+      .brand-sub, #btn-instructor, #btn-master-caution, .icao-search, .footer-bar {
+        display: none !important;
+      }
+      .top-telemetry { margin-left: auto; }
+      #danger-text { font-size: 8.5px; max-width: 125px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      
+      .airport-selector {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        gap: 4px;
+        scrollbar-width: none;
+      }
+      .airport-selector::-webkit-scrollbar { display: none; }
+      .apt-btn { min-width: 66px; padding: 4px 6px; flex-shrink: 0; }
+
+      /* Bascule en affichage plein écran par onglet */
+      .workspace {
+        display: block;
+        position: relative;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      .map-container, .panel-left, .panel-right {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+
+      /* Par défaut sur mobile : Radar visible, panneaux cachés */
+      .panel-left, .panel-right {
+        display: none;
+        z-index: 600;
+        overflow-y: auto;
+        padding-bottom: 30px;
+        background: var(--bg-panel);
+      }
+
+      body.mob-tab-cockpit .panel-right { display: flex; }
+      body.mob-tab-apt .panel-left { display: flex; }
+
+      /* Épuration Chirurgicale : sur mobile on masque la radio pour garder le METAR & Crosswind */
+      .panel-left .panel-section:nth-child(3) { display: none; }
+      .traffic-table-wrap { max-height: 240px; }
+
+      /* Mise en valeur du MCP Sniffer & 4 Vitesses sur l'onglet Cockpit */
+      .fma-box .val { font-size: 12.5px; }
+      .t-card { padding: 7px 8px; }
+      .t-card .v { font-size: 12.5px; }
+      #complex-telemetry-container { display: block !important; }
+
+      /* Barre d'outils radar compacte */
+      .map-hud-top { top: 6px; left: 6px; right: 6px; gap: 4px; }
+      .hud-toolbar { overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+      .hud-toolbar::-webkit-scrollbar { display: none; }
+      .hud-btn { padding: 4px 6px; font-size: 8.5px; white-space: nowrap; }
+      .map-watermark, .altitude-legend { display: none; }
+
+      /* Mini-Bandeau "Pro Sniffer" en bas du radar quand un avion est touché */
+      .mobile-quick-hud {
+        display: flex;
+        position: absolute;
+        bottom: 10px;
+        left: 8px;
+        right: 8px;
+        z-index: 550;
+        background: rgba(8, 12, 22, 0.95);
+        border: 1.5px solid var(--cyan);
+        border-radius: 6px;
+        padding: 8px 11px;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+      }
+
+      /* Barre de 3 Onglets Tactiles en bas de l'iPhone */
+      .mobile-efb-nav {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        background: #060911;
+        border-top: 1px solid var(--border-bright);
+        z-index: 2000;
+        height: 56px;
+      }
+
+      .mob-nav-btn {
+        background: transparent;
+        border: none;
+        border-right: 1px solid var(--border-dim);
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 800;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        cursor: pointer;
+      }
+      .mob-nav-btn:last-child { border-right: none; }
+      .mob-nav-btn span.ico { font-size: 15px; line-height: 1; }
+      .mob-nav-btn.active {
+        color: var(--cyan);
+        background: rgba(0, 229, 255, 0.1);
+        box-shadow: inset 0 2px 0 var(--cyan);
+      }
+    }
   </style>
 </head>
 <body>
@@ -1390,7 +1525,21 @@
       </div>
     </aside>
   </div>
-
+<!-- BARRE DE NAVIGATION TACTILE (VISIBLE UNIQUEMENT SUR SMARTPHONE) -->
+  <nav class="mobile-efb-nav">
+    <button class="mob-nav-btn active" id="mnav-radar" onclick="switchMobileTab('radar')">
+      <span class="ico">📡</span>
+      <span>LIVE RADAR</span>
+    </button>
+    <button class="mob-nav-btn" id="mnav-cockpit" onclick="switchMobileTab('cockpit')">
+      <span class="ico">✈️</span>
+      <span>COCKPIT EHS</span>
+    </button>
+    <button class="mob-nav-btn" id="mnav-apt" onclick="switchMobileTab('apt')">
+      <span class="ico">🛬</span>
+      <span>METAR & RWY</span>
+    </button>
+  </nav>
   <!-- COPYRIGHT FOOTER -->
   <footer class="footer-bar">
     <div>
@@ -3158,6 +3307,63 @@ loadInstantBootCache();
 selectAirport('ELLX');
 setInterval(fetchLiveTraffic, 3500);
 setInterval(runContinuousAirportWatchdog, 45000);
+/* ============================================================================
+   SMARTPHONE EFB TAB CONTROLLER & LIVE MCP SNIFFER PILL
+============================================================================ */
+(function initMobileEFB() {
+  // Crée le mini-bandeau tactile en bas du radar sur smartphone
+  const mapWrap = document.getElementById('map-wrapper');
+  if (mapWrap) {
+    const quickHud = document.createElement('div');
+    quickHud.className = 'mobile-quick-hud';
+    quickHud.onclick = () => switchMobileTab('cockpit');
+    quickHud.innerHTML = `
+      <div>
+        <div style="font-family:var(--font-hud);font-size:13px;font-weight:900;color:#fff" id="mob-q-cs">TOUCH AN AIRCRAFT</div>
+        <div style="font-size:9.5px;color:var(--cyan);margin-top:2px" id="mob-q-sub">LIVE MODE-S EHS & MCP SNIFFER</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;font-weight:800;color:var(--magenta)" id="mob-q-mcp">MCP: ----- FT</div>
+        <div style="font-size:9px;color:var(--green);margin-top:2px">OPEN COCKPIT ➔</div>
+      </div>
+    `;
+    mapWrap.appendChild(quickHud);
+  }
+
+  // Met à jour automatiquement le mini-bandeau à chaque rafraîchissement d'avion
+  const origUpdateInspector = window.updateTargetInspector;
+  if (typeof origUpdateInspector === 'function') {
+    window.updateTargetInspector = function(ac) {
+      origUpdateInspector(ac);
+      const csEl = document.getElementById('mob-q-cs');
+      if (csEl && ac) {
+        const iasTxt = document.getElementById('t-ias')?.textContent || '--- KT';
+        const rollTxt = document.getElementById('t-roll')?.textContent || '0.0°';
+        csEl.textContent = `${ac.callsign} (${ac.type})`;
+        document.getElementById('mob-q-sub').textContent = `ALT: ${ac.altBaro} FT | IAS: ${iasTxt} | BANK: ${rollTxt}`;
+        document.getElementById('mob-q-mcp').textContent = ac.navAltMcp ? `MCP SEL: ${ac.navAltMcp} FT` : `GS: ${Math.round(ac.gs)} KT`;
+      }
+    };
+  }
+})();
+
+function switchMobileTab(tab) {
+  document.body.classList.remove('mob-tab-cockpit', 'mob-tab-apt');
+  document.getElementById('mnav-radar')?.classList.remove('active');
+  document.getElementById('mnav-cockpit')?.classList.remove('active');
+  document.getElementById('mnav-apt')?.classList.remove('active');
+
+  if (tab === 'cockpit') {
+    document.body.classList.add('mob-tab-cockpit');
+    document.getElementById('mnav-cockpit')?.classList.add('active');
+  } else if (tab === 'apt') {
+    document.body.classList.add('mob-tab-apt');
+    document.getElementById('mnav-apt')?.classList.add('active');
+  } else {
+    document.getElementById('mnav-radar')?.classList.add('active');
+    setTimeout(() => map.invalidateSize(), 60);
+  }
+}
 </script>
 </body>
 </html>

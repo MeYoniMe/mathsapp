@@ -986,65 +986,109 @@
     ::-webkit-scrollbar-track { background: var(--bg-deep); }
     ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 /* ==========================================================================
-       SMARTPHONE & iPHONE EFB RESPONSIVE ENGINE (IGNORED ON PC)
+       SMARTPHONE & iPHONE EFB RESPONSIVE ENGINE (LOCKED 100% iOS WIDTH)
     ========================================================================== */
     .mobile-efb-nav, .mobile-quick-hud { display: none; }
 
     @media (max-width: 920px) {
-      html, body { font-size: 12px; height: 100dvh; overflow: hidden; }
+      html, body {
+        width: 100% !important;
+        max-width: 100vw !important;
+        height: 100dvh !important;
+        overflow-x: hidden !important;
+        position: fixed;
+        inset: 0;
+      }
       
       .cockpit-shell {
-        grid-template-rows: auto 1fr 56px;
-        height: 100dvh;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) !important;
+        grid-template-rows: auto minmax(0, 1fr) 56px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
       }
 
-      /* Top Bar compacte et scrollable au doigt pour les 6 aéroports */
+      /* Top Bar verrouillée dans la largeur de l'iPhone */
       .top-bar {
+        display: flex;
         flex-wrap: wrap;
+        width: 100% !important;
+        max-width: 100vw !important;
         padding: 6px 8px;
-        gap: 6px;
+        gap: 4px;
         height: auto;
+        overflow: hidden;
       }
       .brand-block { border-right: none; padding-right: 0; }
+      .brand-title { font-size: 12px; }
+      .brand-logo { width: 24px; height: 24px; }
       .brand-sub, #btn-instructor, #btn-master-caution, .icao-search, .footer-bar {
         display: none !important;
       }
-      .top-telemetry { margin-left: auto; }
-      #danger-text { font-size: 8.5px; max-width: 125px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       
+      .top-telemetry {
+        margin-left: auto;
+        gap: 4px;
+        min-width: 0;
+        flex-shrink: 1;
+      }
+      #btn-euro-danger { padding: 3px 5px; }
+      #danger-text {
+        font-size: 8px;
+        max-width: 85px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .zulu-clock { padding-left: 5px; }
+      .zulu-time { font-size: 10.5px; }
+      .zulu-date { font-size: 7.5px; }
+      
+      /* Les 6 aéroports rentrent ou glissent au doigt sans jamais élargir la page */
       .airport-selector {
         order: 3;
-        width: 100%;
+        width: 100% !important;
+        max-width: calc(100vw - 16px) !important;
         overflow-x: auto;
         padding-bottom: 2px;
         gap: 4px;
         scrollbar-width: none;
       }
       .airport-selector::-webkit-scrollbar { display: none; }
-      .apt-btn { min-width: 66px; padding: 4px 6px; flex-shrink: 0; }
+      .apt-btn {
+        min-width: 56px;
+        padding: 3px 5px;
+        font-size: 10px;
+        flex: 1 0 auto;
+      }
+      .apt-btn small { font-size: 6.5px; }
 
-      /* Bascule en affichage plein écran par onglet */
+      /* Zone centrale verrouillée */
       .workspace {
         display: block;
         position: relative;
+        width: 100% !important;
+        max-width: 100vw !important;
         height: 100%;
-        width: 100%;
         overflow: hidden;
       }
 
       .map-container, .panel-left, .panel-right {
         position: absolute;
         inset: 0;
-        width: 100%;
+        width: 100% !important;
+        max-width: 100vw !important;
         height: 100%;
         border: none;
       }
 
-      /* Par défaut sur mobile : Radar visible, panneaux cachés */
       .panel-left, .panel-right {
         display: none;
         z-index: 600;
         overflow-y: auto;
+        overflow-x: hidden;
         padding-bottom: 30px;
         background: var(--bg-panel);
       }
@@ -1052,45 +1096,66 @@
       body.mob-tab-cockpit .panel-right { display: flex; }
       body.mob-tab-apt .panel-left { display: flex; }
 
-      /* Épuration Chirurgicale : sur mobile on masque la radio pour garder le METAR & Crosswind */
+      /* Épuration mobile */
       .panel-left .panel-section:nth-child(3) { display: none; }
       .traffic-table-wrap { max-height: 240px; }
-
-      /* Mise en valeur du MCP Sniffer & 4 Vitesses sur l'onglet Cockpit */
-      .fma-box .val { font-size: 12.5px; }
-      .t-card { padding: 7px 8px; }
-      .t-card .v { font-size: 12.5px; }
+      .fma-box .val { font-size: 11px; }
+      .t-card { padding: 6px 7px; }
+      .t-card .v { font-size: 11.5px; }
       #complex-telemetry-container { display: block !important; }
+      #pfd-canvas { width: 100% !important; height: 120px !important; }
 
-      /* Barre d'outils radar compacte */
-      .map-hud-top { top: 6px; left: 6px; right: 6px; gap: 4px; }
-      .hud-toolbar { overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+      /* Barres de filtres sur la carte contenues à l'intérieur de l'écran */
+      .map-hud-top {
+        top: 6px;
+        left: 6px;
+        right: 6px;
+        width: calc(100vw - 12px) !important;
+        gap: 4px;
+      }
+      .hud-toolbar {
+        overflow-x: auto;
+        width: 100%;
+        max-width: calc(100vw - 12px) !important;
+        scrollbar-width: none;
+      }
       .hud-toolbar::-webkit-scrollbar { display: none; }
-      .hud-btn { padding: 4px 6px; font-size: 8.5px; white-space: nowrap; }
+      .hud-btn { padding: 4px 6px; font-size: 8px; white-space: nowrap; flex-shrink: 0; }
       .map-watermark, .altitude-legend { display: none; }
 
-      /* Mini-Bandeau "Pro Sniffer" en bas du radar quand un avion est touché */
+      /* Allègement des étiquettes VOR sur petit écran (masque le code morse sur mobile) */
+      .ac-label span { display: none; }
+      .ac-label { font-size: 7.5px; padding: 1px 3px; }
+
+      /* Mini-Bandeau "Pro Sniffer" parfaitement cadré en bas du radar */
       .mobile-quick-hud {
         display: flex;
         position: absolute;
-        bottom: 10px;
-        left: 8px;
-        right: 8px;
+        bottom: 8px;
+        left: 6px;
+        right: 6px;
+        width: calc(100vw - 12px) !important;
         z-index: 550;
         background: rgba(8, 12, 22, 0.95);
         border: 1.5px solid var(--cyan);
         border-radius: 6px;
-        padding: 8px 11px;
+        padding: 7px 10px;
         align-items: center;
         justify-content: space-between;
+        gap: 6px;
         box-shadow: 0 6px 22px rgba(0, 0, 0, 0.85);
         backdrop-filter: blur(8px);
       }
+      #mob-q-cs { font-size: 12px !important; }
+      #mob-q-sub { font-size: 8.5px !important; }
+      #mob-q-mcp { font-size: 9.5px !important; white-space: nowrap; }
 
-      /* Barre de 3 Onglets Tactiles en bas de l'iPhone */
+      /* Barre de 3 Onglets Tactiles verrouillée à 100% de la largeur */
       .mobile-efb-nav {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100% !important;
+        max-width: 100vw !important;
         background: #060911;
         border-top: 1px solid var(--border-bright);
         z-index: 2000;
@@ -1103,17 +1168,17 @@
         border-right: 1px solid var(--border-dim);
         color: var(--text-muted);
         font-family: var(--font-mono);
-        font-size: 10px;
+        font-size: 9.5px;
         font-weight: 800;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 3px;
-        cursor: pointer;
+        padding: 0 2px;
       }
       .mob-nav-btn:last-child { border-right: none; }
-      .mob-nav-btn span.ico { font-size: 15px; line-height: 1; }
+      .mob-nav-btn span.ico { font-size: 14px; line-height: 1; }
       .mob-nav-btn.active {
         color: var(--cyan);
         background: rgba(0, 229, 255, 0.1);
